@@ -1,9 +1,16 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import { cookies, headers } from "next/headers";
 import "./globals.css";
 import { ThemeProvider } from "@/providers/theme-provider";
+import { LanguageProvider } from "@/providers/language-provider";
 import { Toaster } from "sonner";
 import { SiteHeader } from "@/components/layout/SiteHeader";
+import {
+  detectLanguageFromHeader,
+  isLanguage,
+  LANGUAGE_COOKIE,
+} from "@/lib/i18n/config";
 
 const inter = Inter({ subsets: ["latin", "cyrillic"] });
 const brandIconUrl = "/black-logo.png?v=20260321";
@@ -54,31 +61,40 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const headerStore = await headers();
+  const cookieLanguage = cookieStore.get(LANGUAGE_COOKIE)?.value;
+  const initialLanguage = isLanguage(cookieLanguage)
+    ? cookieLanguage
+    : detectLanguageFromHeader(headerStore.get("accept-language"));
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={initialLanguage} suppressHydrationWarning>
       <body className={`${inter.className} min-h-screen antialiased bg-background text-foreground flex flex-col`}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-        >
-          <SiteHeader />
-          <main className="flex-1 w-full">
-            {children}
-          </main>
-          {/* Apple-style toast feedback */}
-          <Toaster 
-            position="bottom-right" 
-            toastOptions={{
-              className: "dark:bg-black dark:text-white dark:border-white/10 bg-white text-black border-black/10 rounded-2xl shadow-xl",
-            }}
-          />
-        </ThemeProvider>
+        <LanguageProvider initialLanguage={initialLanguage}>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+          >
+            <SiteHeader />
+            <main className="flex-1 w-full">
+              {children}
+            </main>
+            {/* Apple-style toast feedback */}
+            <Toaster 
+              position="bottom-right" 
+              toastOptions={{
+                className: "dark:bg-black dark:text-white dark:border-white/10 bg-white text-black border-black/10 rounded-2xl shadow-xl",
+              }}
+            />
+          </ThemeProvider>
+        </LanguageProvider>
       </body>
     </html>
   );

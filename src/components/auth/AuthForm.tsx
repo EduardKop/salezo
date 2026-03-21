@@ -3,9 +3,14 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase";
+import { useLanguage, type Language } from "@/hooks/useLanguage";
+import { auth as translations, t as getT } from "@/lib/i18n/translations";
 
 export function AuthForm() {
   const [isLoading, setIsLoading] = useState(false);
+  const { language, mounted } = useLanguage();
+  const activeLanguage = (mounted ? language : "ru") as Language;
+  const t = getT(translations, activeLanguage);
 
   async function onGoogleLogin() {
     setIsLoading(true);
@@ -18,7 +23,7 @@ export function AuthForm() {
     });
     if (error) {
       setIsLoading(false);
-      toast.error("Google sign-in failed", { description: error.message });
+      toast.error(t.signInFailed, { description: error.message });
     }
     // On success the browser redirects — no need to setIsLoading(false)
   }
@@ -26,9 +31,9 @@ export function AuthForm() {
   return (
     <div className="w-full max-w-sm space-y-6">
       <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">Welcome back</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{t.welcome}</h1>
         <p className="text-sm text-neutral-500 dark:text-neutral-400">
-          Sign in to your account to continue
+          {t.subtitle}
         </p>
       </div>
 
@@ -50,15 +55,15 @@ export function AuthForm() {
               <path d="M1 1h22v22H1z" fill="none" />
             </svg>
           )}
-          Google
+          {t.google}
         </button>
       </div>
 
       <p className="px-8 text-center text-sm text-neutral-500 dark:text-neutral-400">
-        By clicking continue, you agree to our{" "}
-        <a href="#" className="underline underline-offset-4 hover:text-black dark:hover:text-white">Terms of Service</a>{" "}
-        and{" "}
-        <a href="#" className="underline underline-offset-4 hover:text-black dark:hover:text-white">Privacy Policy</a>.
+        {t.termsLead}{" "}
+        <a href="#" className="underline underline-offset-4 hover:text-black dark:hover:text-white">{t.termsOfService}</a>{" "}
+        {t.and}{" "}
+        <a href="#" className="underline underline-offset-4 hover:text-black dark:hover:text-white">{t.privacyPolicy}</a>.
       </p>
     </div>
   );

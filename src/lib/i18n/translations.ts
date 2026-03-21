@@ -2,8 +2,8 @@
  * Central i18n translations for Salezo.
  * Add all new keys here — never inline translations in components.
  */
-
-export type Language = "en" | "ru";
+import type { Language } from "@/lib/i18n/config";
+export type { Language } from "@/lib/i18n/config";
 
 // ─── Common (shared across pages) ─────────────────────────────────────────────
 export const common = {
@@ -212,6 +212,324 @@ export const newProject = {
       salesProcess:    { title: "Определите процесс продаж",desc: "Звонки, встречи или чаты? Нужны ли специфичные функции CRM?", placeholder: "Продажи включают в себя холодные звонки и персонализированные PDF-предложения..." },
       countries:       { title: "Страны продаж",           desc: "В каких странах вы продаёте? Добавьте все актуальные рынки.",  placeholder: "Например: Украина, Германия, США..." },
     },
+  },
+} as const;
+
+// ─── Site Header ──────────────────────────────────────────────────────────────
+export const siteHeader = {
+  en: {
+    product: "Product",
+    news: "News",
+    howItWorks: "How it works",
+    productTitle: "Available in Salezo",
+    productSubtitle: "Core product capabilities available today.",
+    projects: "Sales Projects",
+    projectsDescription: "Organize sales workspaces around real project flows.",
+    access: "Project Access",
+    accessDescription: "Join projects by key and manage approvals clearly.",
+    roles: "Team Roles",
+    rolesDescription: "Keep owners, admins, and members separated by access level.",
+    scripts: "Scripts",
+    scriptsDescription: "Prepare dedicated script modules inside each project.",
+    bilingual: "Bilingual UI",
+    bilingualDescription: "Switch between Russian and English instantly.",
+    secure: "Secure Foundation",
+    secureDescription: "Built on Supabase auth, database rules, and RLS.",
+    newsTitle: "Sales News",
+    newsSubtitle: "A curated sales news hub will appear here soon.",
+    newsPlaceholder: "Coming soon",
+    docsTitle: "Documentation",
+    docsSubtitle: "See how the workspace is structured and how the flow works.",
+    docsLink: "Open documentation",
+    languageToggle: "Switch language",
+    themeToggle: "Toggle theme",
+  },
+  ru: {
+    product: "Продукт",
+    news: "Новости",
+    howItWorks: "Как это работает",
+    productTitle: "Доступно в Salezo",
+    productSubtitle: "Ключевые возможности продукта, доступные уже сейчас.",
+    projects: "Проекты Продаж",
+    projectsDescription: "Организуйте рабочие пространства продаж вокруг реальных проектов.",
+    access: "Доступ к Проекту",
+    accessDescription: "Подключайтесь по ключу и удобно управляйте одобрением доступа.",
+    roles: "Роли Команды",
+    rolesDescription: "Разделяйте владельцев, админов и участников по уровням доступа.",
+    scripts: "Скрипты",
+    scriptsDescription: "Подготавливайте отдельные модульные скрипты внутри проекта.",
+    bilingual: "Два Языка",
+    bilingualDescription: "Мгновенно переключайтесь между русским и английским.",
+    secure: "Безопасная Основа",
+    secureDescription: "Построено на Supabase auth, правилах базы и RLS.",
+    newsTitle: "Новости Продаж",
+    newsSubtitle: "Здесь скоро появится отдельный хаб с новостями по Sales.",
+    newsPlaceholder: "Скоро",
+    docsTitle: "Документация",
+    docsSubtitle: "Посмотрите, как устроено рабочее пространство и логика продукта.",
+    docsLink: "Открыть документацию",
+    languageToggle: "Сменить язык",
+    themeToggle: "Переключить тему",
+  },
+} as const;
+
+// ─── Landing Page ─────────────────────────────────────────────────────────────
+export const landing = {
+  en: {
+    badge: "Salezo OS is live",
+    titleTop: "The Workspace for",
+    titleBottom: "Top-tier Sales AI.",
+    description:
+      "A focused sales workspace for reps, team leads, and owners. Manage projects, organize access, and build the operational layer around your sales flow.",
+    cta: "Increase sales",
+    dialogTitle: "Sign in to Salezo",
+    flowEyebrow: "How it works",
+    flowTitle: "From sales conversations to AI execution",
+    flowDescription:
+      "Turn real sales context into structured AI systems, assistants, and decision support.",
+    flowUser: "User",
+    flowDialogs: "Sales dialogs",
+    flowAi: "AI",
+    flowVectorDb: "Vector database",
+    flowVectorDbDesc: "Sales memory and objections.",
+    flowScriptAssistant: "AI script",
+    flowScriptAssistantDesc: "Reply and rebuttal guidance.",
+    flowAgents: "Sales agents",
+    flowAgentsDesc: "AI agents for lead flow.",
+    flowImprovedScripts: "Better scripts",
+    flowImprovedScriptsDesc: "Scripts improved from wins.",
+    flowAnalysis: "Issue analysis",
+    flowAnalysisDesc: "Bottlenecks and weak points.",
+    featureSectionEyebrow: "Core modules",
+    featureSectionTitle: "Scroll through the AI sales stack.",
+    featureSectionDescription:
+      "Each layer handles a different part of the workflow, from sales memory to execution and analysis.",
+    featureVectorLabel: "AI Sales Knowledge Base",
+    featureVectorHeadline: "Keep your sales memory structured and retrievable.",
+    featureVectorBody:
+      "Store objections, winning language, and deal context so the AI works from real sales knowledge.",
+    featureVectorPointOne: "Shared memory for AI",
+    featureVectorPointTwo: "Objections and patterns",
+    featureScriptLabel: "AI Sales Assistant",
+    featureScriptHeadline: "Generate live script guidance from real conversations.",
+    featureScriptBody:
+      "Surface stronger replies, rebuttals, and next-step prompts while the team is actively selling.",
+    featureScriptPointOne: "Reply suggestions",
+    featureScriptPointTwo: "Rebuttal blocks",
+    featureAgentsLabel: "AI Sales Agents",
+    featureAgentsHeadline: "Launch agents for lead flow and follow-ups.",
+    featureAgentsBody:
+      "Specialized agents can qualify, route, and move conversations forward without losing context.",
+    featureAgentsPointOne: "Lead handling",
+    featureAgentsPointTwo: "Follow-up logic",
+    featureBetterLabel: "Sales Script Generator",
+    featureBetterHeadline: "Turn winning calls into stronger reusable playbooks.",
+    featureBetterBody:
+      "Promote the best phrases, structures, and sequencing patterns into upgraded script systems.",
+    featureBetterPointOne: "Script upgrades",
+    featureBetterPointTwo: "What converts best",
+    featureAnalysisLabel: "Sales Funnel Analysis",
+    featureAnalysisHeadline: "Find weak points before they cost the pipeline.",
+    featureAnalysisBody:
+      "Spot recurring objections, stalled stages, and the parts of the process that need attention first.",
+    featureAnalysisPointOne: "Pipeline bottlenecks",
+    featureAnalysisPointTwo: "Stage-by-stage issues",
+    featureTableFeature: "Feature",
+    featureTableHandles: "Handles",
+    featureTableValue: "Why it matters",
+    featureIntroEyebrow: "What runs inside Salezo?",
+    featureIntroTitle: "A sales workspace, or a complete AI operating system?",
+    featureIntroDescription:
+      "Salezo is built to do more than display data. It connects your sales knowledge base, AI sales assistant, AI agents, sales script generator, and sales funnel analysis into one working system for teams that want to train faster, sell better, and improve continuously.",
+    featureVectorHandle:
+      "Builds a sales vector database with objections, scripts, deal context, and team knowledge.",
+    featureVectorValue:
+      "Use it inside Salezo AI, power external agents, or export the knowledge base for AI model training.",
+    featureScriptHandle:
+      "Supports reps in difficult sales situations, training flows, and onboarding with a sales simulator.",
+    featureScriptValue:
+      "Improves sales scripts, strengthens objection handling, and reveals weak points in the script flow.",
+    featureAgentsHandle:
+      "Runs the full AI script flow with extra context from the internet and external resources.",
+    featureAgentsValue:
+      "Helps automate research, qualification, follow-up, and more advanced AI sales execution.",
+    featureBetterHandle:
+      "Uses the project setup, vector database, AI agents, and AI scripts to upgrade any sales script.",
+    featureBetterValue:
+      "Strengthens messaging, sales logic, structure, and conversion-focused script quality.",
+    featureAnalysisHandle:
+      "Analyzes the same project context, AI scripts, knowledge base, and agent activity to detect sales issues.",
+    featureAnalysisValue:
+      "Shows bottlenecks, weak funnel stages, recurring objections, and the highest-impact growth opportunities.",
+    mockupLabel: "Salezo Dashboard",
+  },
+  ru: {
+    badge: "Salezo OS уже доступна",
+    titleTop: "Рабочее пространство для",
+    titleBottom: "Sales AI высокого уровня.",
+    description:
+      "Сфокусированное рабочее пространство для менеджеров по продажам, тимлидов и владельцев. Управляйте проектами, доступами и всей операционной логикой вокруг продаж.",
+    cta: "Увеличить продажи",
+    dialogTitle: "Войти в Salezo",
+    flowEyebrow: "Как это работает",
+    flowTitle: "От диалогов продаж к AI-исполнению",
+    flowDescription:
+      "Превращайте реальные sales-диалоги в структурированные AI-системы, помощников и инструменты для решений.",
+    flowUser: "Пользователь",
+    flowDialogs: "Диалоги продаж",
+    flowAi: "AI",
+    flowVectorDb: "Векторная база",
+    flowVectorDbDesc: "Память продаж и возражений.",
+    flowScriptAssistant: "AI скрипт",
+    flowScriptAssistantDesc: "Подсказки для ответов и возражений.",
+    flowAgents: "AI агенты",
+    flowAgentsDesc: "Агенты для лидов и продаж.",
+    flowImprovedScripts: "Сильнее скрипты",
+    flowImprovedScriptsDesc: "Улучшение скриптов по удачным кейсам.",
+    flowAnalysis: "Анализ проблем",
+    flowAnalysisDesc: "Узкие места и слабые этапы.",
+    featureSectionEyebrow: "Основные модули",
+    featureSectionTitle: "Прокрутите весь AI sales-стек.",
+    featureSectionDescription:
+      "Каждый слой отвечает за свою часть процесса: от памяти продаж до исполнения и аналитики.",
+    featureVectorLabel: "AI база знаний для продаж",
+    featureVectorHeadline: "Храните память о продажах в структурированном виде.",
+    featureVectorBody:
+      "Сохраняйте возражения, сильные формулировки и контекст сделок, чтобы AI работал от реальных знаний отдела продаж.",
+    featureVectorPointOne: "Общая память для AI",
+    featureVectorPointTwo: "Возражения и паттерны",
+    featureScriptLabel: "AI помощник для продаж",
+    featureScriptHeadline: "Получайте живые подсказки из реальных sales-диалогов.",
+    featureScriptBody:
+      "Показывайте более сильные ответы, rebuttal-блоки и следующий шаг прямо во время продаж.",
+    featureScriptPointOne: "Подсказки для ответов",
+    featureScriptPointTwo: "Блоки возражений",
+    featureAgentsLabel: "AI агенты для продаж",
+    featureAgentsHeadline: "Запускайте агентов для лидов и follow-up процессов.",
+    featureAgentsBody:
+      "Специализированные агенты могут квалифицировать, маршрутизировать и продвигать диалог, не теряя контекст.",
+    featureAgentsPointOne: "Обработка лидов",
+    featureAgentsPointTwo: "Follow-up логика",
+    featureBetterLabel: "Генератор скриптов продаж",
+    featureBetterHeadline: "Превращайте успешные звонки в более сильные playbook-системы.",
+    featureBetterBody:
+      "Поднимайте лучшие фразы, структуру и последовательности в улучшенные сценарии продаж.",
+    featureBetterPointOne: "Улучшение скриптов",
+    featureBetterPointTwo: "Что конвертит лучше",
+    featureAnalysisLabel: "Анализ воронки продаж",
+    featureAnalysisHeadline: "Находите слабые места до того, как они бьют по воронке.",
+    featureAnalysisBody:
+      "Выявляйте повторяющиеся возражения, зависшие этапы и участки процесса, требующие внимания в первую очередь.",
+    featureAnalysisPointOne: "Узкие места воронки",
+    featureAnalysisPointTwo: "Проблемы по этапам",
+    featureTableFeature: "Фича",
+    featureTableHandles: "За что отвечает",
+    featureTableValue: "Что даёт",
+    featureIntroEyebrow: "Что работает внутри Salezo?",
+    featureIntroTitle: "Рабочее пространство для продаж, или полноценная AI operating system?",
+    featureIntroDescription:
+      "Salezo создана не только для отображения данных. Платформа объединяет AI базу знаний для продаж, AI помощника для продаж, AI агентов, генератор скриптов продаж и анализ воронки продаж в единую систему для команд, которые хотят быстрее обучать менеджеров, продавать сильнее и постоянно улучшать процесс.",
+    featureVectorHandle:
+      "Создаёт векторную базу продаж с возражениями, скриптами, контекстом сделок и знаниями команды.",
+    featureVectorValue:
+      "Позволяет использовать базу внутри AI в Salezo, запускать внешних агентов или выгружать её для обучения AI-моделей.",
+    featureScriptHandle:
+      "Помогает менеджерам отвечать в сложных sales-ситуациях, проходить тренинг и обучать новых менеджеров в симуляторе продаж.",
+    featureScriptValue:
+      "Позволяет улучшать скрипт продаж, усиливать ответы на возражения и находить слабые места в сценарии.",
+    featureAgentsHandle:
+      "Работает по полному флоу AI script, добавляя больше контекста через интернет и внешние ресурсы.",
+    featureAgentsValue:
+      "Помогает автоматизировать исследования, квалификацию, follow-up и более сложное AI-исполнение продаж.",
+    featureBetterHandle:
+      "После настройки проекта, векторной базы, AI-агентов и AI scripts усиливает любой скрипт продаж.",
+    featureBetterValue:
+      "Улучшает формулировки, логику продаж, структуру диалога и общий уровень конверсии скрипта.",
+    featureAnalysisHandle:
+      "Анализирует тот же контекст проекта, AI-скриптов, базы знаний и работы агентов, чтобы находить проблемы в продажах.",
+    featureAnalysisValue:
+      "Показывает узкие места, слабые этапы воронки, повторяющиеся возражения и точки роста для команды продаж.",
+    mockupLabel: "Дашборд Salezo",
+  },
+} as const;
+
+// ─── Auth Form ────────────────────────────────────────────────────────────────
+export const auth = {
+  en: {
+    welcome: "Welcome back",
+    subtitle: "Sign in to your account to continue",
+    google: "Google",
+    signInFailed: "Google sign-in failed",
+    termsLead: "By clicking continue, you agree to our",
+    termsOfService: "Terms of Service",
+    privacyPolicy: "Privacy Policy",
+    and: "and",
+  },
+  ru: {
+    welcome: "С возвращением",
+    subtitle: "Войдите в аккаунт, чтобы продолжить",
+    google: "Google",
+    signInFailed: "Не удалось войти через Google",
+    termsLead: "Нажимая продолжить, вы соглашаетесь с нашими",
+    termsOfService: "Условиями использования",
+    privacyPolicy: "Политикой конфиденциальности",
+    and: "и",
+  },
+} as const;
+
+// ─── Login Page ───────────────────────────────────────────────────────────────
+export const login = {
+  en: {
+    back: "Back to home",
+    badge: "Secure access for your workspace",
+    titleTop: "Continue inside",
+    titleBottom: "your AI sales system.",
+    description:
+      "Sign in to access projects, team permissions, and the operational layer around your sales process.",
+    panelLabel: "Inside Salezo",
+    panelTitle: "Projects, access, and execution",
+    panelDescription:
+      "Move from scattered sales operations to one structured workspace for managers, leads, and owners.",
+    panelPointOne: "Project-based collaboration",
+    panelPointTwo: "Role-aware access and approvals",
+    panelPointThree: "AI-ready operational foundation",
+  },
+  ru: {
+    back: "На главную",
+    badge: "Безопасный доступ к рабочему пространству",
+    titleTop: "Продолжайте работу",
+    titleBottom: "в вашей AI sales-системе.",
+    description:
+      "Войдите, чтобы получить доступ к проектам, ролям команды и операционному слою вокруг ваших продаж.",
+    panelLabel: "Внутри Salezo",
+    panelTitle: "Проекты, доступы и исполнение",
+    panelDescription:
+      "Перейдите от разрозненных sales-процессов к единому рабочему пространству для менеджеров, тимлидов и владельцев.",
+    panelPointOne: "Совместная работа вокруг проектов",
+    panelPointTwo: "Роли, доступы и согласования",
+    panelPointThree: "Основа для AI-инструментов",
+  },
+} as const;
+
+// ─── Docs ─────────────────────────────────────────────────────────────────────
+export const docs = {
+  en: {
+    eyebrow: "Documentation",
+    title: "How Salezo works",
+    description:
+      "This documentation area is being prepared. It will explain the product structure, project flow, roles, and AI-assisted modules.",
+    statusTitle: "In progress",
+    statusDescription:
+      "We are gradually turning product knowledge into structured docs.",
+  },
+  ru: {
+    eyebrow: "Документация",
+    title: "Как работает Salezo",
+    description:
+      "Этот раздел документации сейчас готовится. Здесь будет описание структуры продукта, логики проектов, ролей и AI-модулей.",
+    statusTitle: "В процессе",
+    statusDescription:
+      "Мы постепенно превращаем знания о продукте в структурированную документацию.",
   },
 } as const;
 
