@@ -33,8 +33,8 @@ export default function LoginPage() {
         <div className="relative z-20 mt-auto">
           <blockquote className="space-y-2">
             <p className="text-lg">
-              "This platform completely transformed how our sales team tracks their pipeline. 
-              The bento dashboard design provides unprecedented visibility with zero clutter."
+              &ldquo;This platform completely transformed how our sales team tracks their pipeline.
+              The bento dashboard design provides unprecedented visibility with zero clutter.&rdquo;
             </p>
             <footer className="text-sm">Alexey, РОП</footer>
           </blockquote>

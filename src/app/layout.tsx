@@ -1,24 +1,44 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Geist } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { Toaster } from "sonner";
-import { cn } from "@/lib/utils";
-
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+import { SiteHeader } from "@/components/layout/SiteHeader";
 
 const inter = Inter({ subsets: ["latin", "cyrillic"] });
+const brandIconUrl = "/black-logo.png?v=20260321";
+const faviconUrl = "/favicon.ico?v=20260321";
 
-// SEO & Metadata API Integration
+// SEO & Metadata
 export const metadata: Metadata = {
-  title: "Major Moments - Elite Sales Platform",
-  description: "The ultimate tool for sales reps, team leads and owners. See your major moments effortlessly.",
+  title: "Salezo — Sales Management Platform",
+  description: "Manage sales projects, track team performance, create AI scripts and vector databases to help managers close more deals.",
+  icons: {
+    icon: [
+      {
+        url: brandIconUrl,
+        type: "image/png",
+      },
+    ],
+    shortcut: [
+      {
+        url: faviconUrl,
+        type: "image/x-icon",
+      },
+    ],
+    apple: [
+      {
+        url: brandIconUrl,
+        type: "image/png",
+      },
+    ],
+  },
   openGraph: {
-    title: "Major Moments",
-    description: "SaaS Utility Dashboard for maximum info density and speed.",
-    url: "https://yourdomain.com",
-    siteName: "Major Moments",
-    locale: "en_US", // Will be dynamic via i18n in real implementation
+    title: "Salezo",
+    description: "The ultimate platform for sales teams. Manage projects, track metrics, and grow faster.",
+    url: "https://salezo.io", // TODO: update when domain is confirmed
+    siteName: "Salezo",
+    locale: "ru_RU",
     type: "website",
   },
   robots: {
@@ -40,15 +60,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={cn("font-sans", geist.variable)}>
-      <body className={`${inter.className} min-h-screen antialiased bg-background text-foreground`}>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${inter.className} min-h-screen antialiased bg-background text-foreground flex flex-col`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
           enableSystem
-          disableTransitionOnChange
         >
-          {children}
+          <SiteHeader />
+          <main className="flex-1 w-full">
+            {children}
+          </main>
           {/* Apple-style toast feedback */}
           <Toaster 
             position="bottom-right" 
