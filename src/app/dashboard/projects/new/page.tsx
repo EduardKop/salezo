@@ -8,6 +8,7 @@ import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import { useLanguage } from "@/hooks/useLanguage";
 import { createClient } from "@/lib/supabase";
 import { toast } from "sonner";
+import { PageLoader } from "@/components/ui/page-loader";
 import type { ProductInfo } from "@/lib/projects";
 
 import { newProject as translations, common, t as getT, type Language } from "@/lib/i18n/translations";
@@ -187,7 +188,7 @@ export default function NewProjectPage() {
         throw insertError;
       }
 
-      router.push("/dashboard/projects");
+      router.push("/sales-agents/projects");
     } catch (error) {
       console.error("Error creating project:", error);
       toast.error(language === 'ru' ? "Не удалось создать проект" : "Failed to create project");
@@ -220,11 +221,7 @@ export default function NewProjectPage() {
   };
 
   if (!mounted) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4">
-        <Loader2 className="w-8 h-8 text-blue-500 animate-spin mb-4" />
-      </div>
-    );
+    return <PageLoader className="min-h-[calc(100vh-5rem)]" />;
   }
 
   return (

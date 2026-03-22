@@ -6,6 +6,7 @@ import { Link2, ArrowRight, CheckCircle2, AlertCircle, Loader2, Workflow } from 
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/hooks/useLanguage";
 import { joinProjectAction } from "@/app/actions/projects";
+import { PageLoader } from "@/components/ui/page-loader";
 import { connect as translations, common, t as getT, type Language } from "@/lib/i18n/translations";
 
 export default function ConnectProjectPage() {
@@ -28,7 +29,7 @@ export default function ConnectProjectPage() {
     try {
       await joinProjectAction(key.trim());
       setStatus("success");
-      setTimeout(() => router.push("/dashboard/projects"), 2000);
+      setTimeout(() => router.push("/sales-agents/projects"), 2000);
     } catch (error) {
       const message = error instanceof Error ? error.message : "unknown_error";
       console.error("Connect error:", message);
@@ -47,7 +48,9 @@ export default function ConnectProjectPage() {
     }
   };
 
-  if (!mounted) return null;
+  if (!mounted) {
+    return <PageLoader className="min-h-[calc(100vh-5rem)]" />;
+  }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] w-full p-4 relative">
@@ -112,7 +115,7 @@ export default function ConnectProjectPage() {
             <div className="pt-2 flex justify-end gap-3">
               <button
                 type="button"
-                onClick={() => router.push("/dashboard/projects")}
+                onClick={() => router.push("/sales-agents/projects")}
                 className="px-4 py-2 bg-transparent text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white text-sm font-medium transition-colors focus:outline-none"
                 disabled={status === "loading" || status === "success"}
               >

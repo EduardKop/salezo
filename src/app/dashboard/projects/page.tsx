@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/lib/supabase";
 import { useLanguage } from "@/hooks/useLanguage";
 import { AvatarCircles } from "@/components/ui/avatar-circles";
+import { PageLoader } from "@/components/ui/page-loader";
 import { toast } from "sonner";
 import {
   isProductInfoList,
@@ -232,14 +233,8 @@ export default function ProjectsPage() {
     });
   };
 
-  if (!mounted) return null;
-
-  if (isLoading) {
-    return (
-      <div className="w-full h-[60vh] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-      </div>
-    );
+  if (!mounted || isLoading) {
+    return <PageLoader className="min-h-[calc(100vh-5rem)]" />;
   }
 
   if (dbError) {
@@ -279,14 +274,14 @@ export default function ProjectsPage() {
         </p>
         <div className="flex flex-wrap items-center justify-center gap-3">
           <Link
-            href="/dashboard/projects/new"
+            href="/sales-agents/projects/new"
             className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-6 py-2.5 rounded-full text-sm font-medium transition-all shadow-lg shadow-blue-500/20 hover:scale-105 active:scale-95"
           >
             <Plus className="w-4 h-4" />
             {t.createProjectBtn}
           </Link>
           <Link
-            href="/dashboard/projects/connect"
+            href="/sales-agents/projects/connect"
             className="inline-flex items-center justify-center gap-2 bg-white dark:bg-[#000000] text-neutral-900 dark:text-neutral-100 px-6 py-2.5 rounded-full text-sm font-medium transition-colors border border-neutral-200 dark:border-neutral-800 hover:border-black dark:hover:border-neutral-500"
           >
             <Link2 className="w-4 h-4" />
@@ -312,14 +307,14 @@ export default function ProjectsPage() {
         </div>
         <div className="flex items-center gap-3 shrink-0">
           <Link
-            href="/dashboard/projects/connect"
+            href="/sales-agents/projects/connect"
             className="inline-flex items-center justify-center gap-2 bg-white dark:bg-[#000000] text-neutral-900 dark:text-neutral-100 hover:border-black dark:hover:border-neutral-500 px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-neutral-200 dark:border-neutral-800 shadow-sm shrink-0"
           >
             <Link2 className="w-4 h-4" />
             {t.connectProject}
           </Link>
           <Link
-            href="/dashboard/projects/new"
+            href="/sales-agents/projects/new"
             className="inline-flex items-center justify-center gap-2 bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-transparent shadow-sm shrink-0"
           >
             <Plus className="w-4 h-4" />
@@ -396,7 +391,7 @@ export default function ProjectsPage() {
             <div key={project.id} className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               {/* Main Project Card (Clicks through to dashboard) */}
               <Link
-                href={`/dashboard/projects/${project.id}`}
+                href={`/sales-agents/projects/${project.id}`}
                 className={`${canManage ? 'lg:col-span-2' : 'lg:col-span-3'} group flex flex-col justify-between h-full bg-white dark:bg-[#000000] border border-neutral-200 dark:border-neutral-800 rounded-lg overflow-hidden transition-colors hover:border-black dark:hover:border-neutral-500`}
               >
                 <div className="p-5 flex-1">

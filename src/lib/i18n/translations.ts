@@ -338,9 +338,19 @@ export const landing = {
     featureTableHandles: "Handles",
     featureTableValue: "Why it matters",
     featureIntroEyebrow: "What runs inside Salezo?",
-    featureIntroTitle: "A sales workspace, or a complete AI operating system?",
+    featureIntroTitlePrefix: "A sales workspace, or a complete",
+    featureIntroTitleHighlight: "AI operating system?",
     featureIntroDescription:
       "Salezo is built to do more than display data. It connects your sales knowledge base, AI sales assistant, AI agents, sales script generator, and sales funnel analysis into one working system for teams that want to train faster, sell better, and improve continuously.",
+    featureIntroMorphingTexts: [
+      "SALEZO IS BUILT TO DO MORE THAN DISPLAY DATA.",
+      "IT CONNECTS YOUR SALES KNOWLEDGE BASE.",
+      "YOUR AI SALES ASSISTANT AND AI AGENTS.",
+      "YOUR SALES SCRIPT GENERATOR.",
+      "YOUR SALES FUNNEL ANALYSIS.",
+      "ONE WORKING SYSTEM TO TRAIN FASTER.",
+      "SELL BETTER. IMPROVE CONTINUOUSLY.",
+    ],
     featureVectorHandle:
       "Builds a sales vector database with objections, scripts, deal context, and team knowledge.",
     featureVectorValue:
@@ -426,9 +436,19 @@ export const landing = {
     featureTableHandles: "За что отвечает",
     featureTableValue: "Что даёт",
     featureIntroEyebrow: "Что работает внутри Salezo?",
-    featureIntroTitle: "Рабочее пространство для продаж, или полноценная AI operating system?",
+    featureIntroTitlePrefix: "Рабочее пространство для продаж, или полноценная",
+    featureIntroTitleHighlight: "AI operating system?",
     featureIntroDescription:
       "Salezo создана не только для отображения данных. Платформа объединяет AI базу знаний для продаж, AI помощника для продаж, AI агентов, генератор скриптов продаж и анализ воронки продаж в единую систему для команд, которые хотят быстрее обучать менеджеров, продавать сильнее и постоянно улучшать процесс.",
+    featureIntroMorphingTexts: [
+      "SALEZO СОЗДАНА НЕ ТОЛЬКО ДЛЯ ОТОБРАЖЕНИЯ ДАННЫХ.",
+      "ОНА ОБЪЕДИНЯЕТ AI БАЗУ ЗНАНИЙ ДЛЯ ПРОДАЖ.",
+      "AI ПОМОЩНИКА ДЛЯ ПРОДАЖ И AI АГЕНТОВ.",
+      "ГЕНЕРАТОР СКРИПТОВ ПРОДАЖ.",
+      "АНАЛИЗ ВОРОНКИ ПРОДАЖ.",
+      "ЕДИНУЮ СИСТЕМУ, ЧТОБЫ ОБУЧАТЬ БЫСТРЕЕ.",
+      "ПРОДАВАТЬ СИЛЬНЕЕ И ПОСТОЯННО УЛУЧШАТЬ ПРОЦЕСС.",
+    ],
     featureVectorHandle:
       "Создаёт векторную базу продаж с возражениями, скриптами, контекстом сделок и знаниями команды.",
     featureVectorValue:
@@ -530,6 +550,110 @@ export const docs = {
     statusTitle: "В процессе",
     statusDescription:
       "Мы постепенно превращаем знания о продукте в структурированную документацию.",
+  },
+} as const;
+
+// ─── Dashboard Home ───────────────────────────────────────────────────────────
+export const dashboardHome = {
+  en: {
+    eyebrow: "Guided Workspace Setup",
+    title: "Build your sales AI system step by step",
+    securityNotice:
+      "All data is protected. To configure the dashboard, complete your first project end to end.",
+    progressLabel: "Progress",
+    nextAction: "Next action",
+    loadFailed: "Could not load dashboard progress.",
+    noAccess: "You need to sign in to see this dashboard state.",
+    retry: "Retry",
+    users: "users",
+    openProject: "Open project",
+    complete: "Complete",
+    inProgress: "In progress",
+    locked: "After previous step",
+    lockedHint: "Complete the previous step to unlock this one.",
+    allDoneTitle: "Workspace is fully configured",
+    allDoneDescription:
+      "All key setup stages are complete. Open any project workspace below.",
+    stepProjectTitle: "Create project",
+    stepProjectDescription:
+      "Define products, pricing, process, and sales markets to create the foundation.",
+    stepProjectHint:
+      "Start in the project wizard to unlock all downstream AI modules.",
+    stepProjectAction: "Open project wizard",
+    stepScriptsTitle: "Create scripts",
+    stepScriptsDescription:
+      "Add your first sales scripts and scenario logic for managers.",
+    stepScriptsHint:
+      "Open the scripts module and add your first script block.",
+    stepScriptsAction: "Open scripts",
+    stepSmsAssistTitle: "Enable message assistant",
+    stepSmsAssistDescription:
+      "Prepare AI response assistance for difficult message threads.",
+    stepSmsAssistHint:
+      "Set up the assistant layer to help with replies and objections.",
+    stepSmsAssistAction: "Configure assistant",
+    stepScriptAgentsTitle: "Set up script agents",
+    stepScriptAgentsDescription:
+      "Add AI agents that adapt and improve scripts automatically.",
+    stepScriptAgentsHint:
+      "Configure script agents to iterate wording and structure.",
+    stepScriptAgentsAction: "Configure agents",
+    stepVectorTitle: "Create vector database",
+    stepVectorDescription:
+      "Build a reusable knowledge base for AI execution and model training.",
+    stepVectorHint:
+      "Index project knowledge to unlock vector-powered AI memory.",
+    stepVectorAction: "Configure vector DB",
+  },
+  ru: {
+    eyebrow: "Пошаговая Настройка Workspace",
+    title: "Соберите вашу AI sales-систему по шагам",
+    securityNotice:
+      "Все данные защищены. Чтобы настроить дашборд, нужно полностью создать первый проект.",
+    progressLabel: "Прогресс",
+    nextAction: "Следующий шаг",
+    loadFailed: "Не удалось загрузить прогресс дашборда.",
+    noAccess: "Нужно войти в аккаунт, чтобы увидеть состояние дашборда.",
+    retry: "Повторить",
+    users: "пользователей",
+    openProject: "Открыть проект",
+    complete: "Готово",
+    inProgress: "В процессе",
+    locked: "После завершения прошлого шага",
+    lockedHint: "Сначала завершите предыдущий шаг, чтобы разблокировать этот.",
+    allDoneTitle: "Workspace полностью настроен",
+    allDoneDescription:
+      "Все ключевые этапы пройдены. Ниже можно открыть любой проект.",
+    stepProjectTitle: "Создать проект",
+    stepProjectDescription:
+      "Задайте продукты, цены, процесс и рынки, чтобы построить основу системы.",
+    stepProjectHint:
+      "Начните с мастера проекта, чтобы открыть остальные AI-модули.",
+    stepProjectAction: "Открыть мастер проекта",
+    stepScriptsTitle: "Создать скрипты",
+    stepScriptsDescription:
+      "Добавьте первые скрипты продаж и сценарии работы менеджеров.",
+    stepScriptsHint:
+      "Откройте модуль скриптов и добавьте первый рабочий блок.",
+    stepScriptsAction: "Открыть скрипты",
+    stepSmsAssistTitle: "Включить помощь для сообщений",
+    stepSmsAssistDescription:
+      "Подготовьте AI-помощь для сложных переписок и возражений.",
+    stepSmsAssistHint:
+      "Настройте слой помощника для ответов и работы с возражениями.",
+    stepSmsAssistAction: "Настроить помощника",
+    stepScriptAgentsTitle: "Настроить AI-агентов скриптов",
+    stepScriptAgentsDescription:
+      "Добавьте AI-агентов для адаптации и улучшения скриптов.",
+    stepScriptAgentsHint:
+      "Настройте агентов, чтобы итеративно усиливать структуру скриптов.",
+    stepScriptAgentsAction: "Настроить агентов",
+    stepVectorTitle: "Создать векторную базу",
+    stepVectorDescription:
+      "Соберите переиспользуемую базу знаний для AI и обучения моделей.",
+    stepVectorHint:
+      "Проиндексируйте знания проекта, чтобы включить векторную память AI.",
+    stepVectorAction: "Настроить векторную базу",
   },
 } as const;
 

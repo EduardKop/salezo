@@ -28,10 +28,13 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (user && pathname === "/") {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    return NextResponse.redirect(new URL("/sales-agents", request.url));
   }
 
-  if (!user && pathname.startsWith("/dashboard")) {
+  if (
+    !user &&
+    (pathname.startsWith("/dashboard") || pathname.startsWith("/sales-agents"))
+  ) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 

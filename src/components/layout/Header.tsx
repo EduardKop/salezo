@@ -32,11 +32,38 @@ export function Header() {
   const { language, changeLanguage } = useLanguage();
 
   React.useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 10);
+    let rafId = 0;
+    let isScrolled = false;
+    const SHOW_AT = 20;
+    const HIDE_AT = 0;
+
+    const updateScrolled = () => {
+      const y = window.scrollY || window.pageYOffset;
+      const nextScrolled = isScrolled ? y > HIDE_AT : y > SHOW_AT;
+
+      if (nextScrolled !== isScrolled) {
+        isScrolled = nextScrolled;
+        setScrolled(nextScrolled);
+      }
+
+      rafId = 0;
     };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+
+    const handleScroll = () => {
+      if (rafId !== 0) {
+        return;
+      }
+      rafId = window.requestAnimationFrame(updateScrolled);
+    };
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (rafId !== 0) {
+        window.cancelAnimationFrame(rafId);
+      }
+    };
   }, []);
 
   React.useEffect(() => {
@@ -59,15 +86,15 @@ export function Header() {
   return (
     <header
       className={cn(
-        "fixed top-0 w-full z-50 transition-all duration-300 border-b",
+        "fixed top-0 w-full z-50 border-b transition-[background-color,border-color,box-shadow] duration-150",
         scrolled
-          ? "bg-white/80 dark:bg-black/80 backdrop-blur-xl border-black/10 dark:border-white/10 shadow-sm"
-          : "bg-transparent border-transparent"
+          ? "bg-white/90 dark:bg-black/90 border-black/10 dark:border-white/10 shadow-sm"
+          : "bg-transparent border-transparent shadow-none"
       )}
     >
       <div className="w-full px-4 h-12 flex items-center justify-between">
         {/* Logo */}
-        <Link href="/dashboard" className="flex items-center gap-2 group">
+        <Link href="/sales-agents" className="flex items-center gap-2 group">
           <BrandLogo className="transition-transform group-hover:scale-[1.02]" />
         </Link>
 

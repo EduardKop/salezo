@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
   // next= lets you redirect to a specific page after login
-  const next = searchParams.get("next") ?? "/dashboard";
+  const next = searchParams.get("next") ?? "/sales-agents";
 
   if (code) {
     const cookieStore = await cookies();

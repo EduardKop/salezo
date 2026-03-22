@@ -5,7 +5,8 @@ import { cn } from "@/lib/utils";
 
 type FeatureParallaxLabels = {
   featureIntroEyebrow: string;
-  featureIntroTitle: string;
+  featureIntroTitlePrefix: string;
+  featureIntroTitleHighlight: string;
   featureIntroDescription: string;
   featureVectorLabel: string;
   featureScriptLabel: string;
@@ -105,11 +106,11 @@ export function FeatureParallaxSection({
           </div>
           <h2
             id="feature-table-heading"
-            className="mt-5 text-4xl font-bold tracking-tight text-black dark:text-white md:text-5xl lg:text-6xl"
+            className="relative mt-5 overflow-visible pb-3 text-4xl font-bold tracking-tight text-black dark:text-white md:text-5xl md:leading-[1.06] lg:text-6xl lg:leading-[1.04]"
           >
-            {labels.featureIntroTitle}
+            {labels.featureIntroTitlePrefix} {labels.featureIntroTitleHighlight}
           </h2>
-          <p className="mx-auto mt-5 max-w-4xl text-base leading-8 text-black/60 dark:text-white/56 md:text-lg">
+          <p className="mx-auto mt-7 max-w-4xl text-center text-base leading-8 text-black/62 dark:text-white/56 md:text-lg">
             {labels.featureIntroDescription}
           </p>
         </div>

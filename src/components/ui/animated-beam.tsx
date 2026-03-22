@@ -9,6 +9,11 @@ type AnimatedBeamProps = {
   containerRef: React.RefObject<HTMLElement | null>;
   fromRef: React.RefObject<HTMLElement | null>;
   toRef: React.RefObject<HTMLElement | null>;
+  straight?: boolean;
+  fromAnchor?: "center" | "top" | "right" | "bottom" | "left";
+  toAnchor?: "center" | "top" | "right" | "bottom" | "left";
+  fromInset?: number;
+  toInset?: number;
   curvature?: number;
   pathColor?: string;
   pathWidth?: number;
@@ -22,6 +27,8 @@ type AnimatedBeamProps = {
   duration?: number;
   delay?: number;
   reverse?: boolean;
+  movingDasharray?: string;
+  movingPathWidth?: number;
 };
 
 type BeamGeometry = {
@@ -33,22 +40,43 @@ type BeamGeometry = {
 function getElementCenter(
   element: HTMLElement,
   containerRect: DOMRect,
+  anchor: "center" | "top" | "right" | "bottom" | "left",
+  inset = 0,
   xOffset = 0,
   yOffset = 0
 ) {
   const rect = element.getBoundingClientRect();
+  const centerX = rect.left - containerRect.left + rect.width / 2;
+  const centerY = rect.top - containerRect.top + rect.height / 2;
+  let x = centerX;
+  let y = centerY;
+
+  if (anchor === "top") {
+    y = rect.top - containerRect.top + inset;
+  } else if (anchor === "bottom") {
+    y = rect.bottom - containerRect.top - inset;
+  } else if (anchor === "left") {
+    x = rect.left - containerRect.left + inset;
+  } else if (anchor === "right") {
+    x = rect.right - containerRect.left - inset;
+  }
 
   return {
-    x: rect.left - containerRect.left + rect.width / 2 + xOffset,
-    y: rect.top - containerRect.top + rect.height / 2 + yOffset,
+    x: x + xOffset,
+    y: y + yOffset,
   };
 }
 
 function buildPath(
   start: { x: number; y: number },
   end: { x: number; y: number },
-  curvature: number
+  curvature: number,
+  straight: boolean
 ) {
+  if (straight) {
+    return `M ${start.x},${start.y} L ${end.x},${end.y}`;
+  }
+
   const deltaX = end.x - start.x;
   const deltaY = end.y - start.y;
   const horizontal = Math.abs(deltaX) >= Math.abs(deltaY);
@@ -71,6 +99,11 @@ export function AnimatedBeam({
   containerRef,
   fromRef,
   toRef,
+  straight = false,
+  fromAnchor = "center",
+  toAnchor = "center",
+  fromInset = 0,
+  toInset = 0,
   curvature = 0,
   pathColor = "currentColor",
   pathWidth = 2,
@@ -84,6 +117,8 @@ export function AnimatedBeam({
   duration = 4,
   delay = 0,
   reverse = false,
+  movingDasharray = "18 82",
+  movingPathWidth,
 }: AnimatedBeamProps) {
   const gradientId = React.useId();
   const [geometry, setGeometry] = React.useState<BeamGeometry | null>(null);
@@ -102,12 +137,16 @@ export function AnimatedBeam({
       const start = getElementCenter(
         fromElement,
         containerRect,
+        fromAnchor,
+        fromInset,
         startXOffset,
         startYOffset
       );
       const end = getElementCenter(
         toElement,
         containerRect,
+        toAnchor,
+        toInset,
         endXOffset,
         endYOffset
       );
@@ -115,7 +154,7 @@ export function AnimatedBeam({
       setGeometry({
         width: containerRect.width,
         height: containerRect.height,
-        path: buildPath(start, end, curvature),
+        path: buildPath(start, end, curvature, straight),
       });
     };
 
@@ -145,9 +184,14 @@ export function AnimatedBeam({
     curvature,
     endXOffset,
     endYOffset,
+    fromAnchor,
+    fromInset,
     fromRef,
     startXOffset,
     startYOffset,
+    straight,
+    toAnchor,
+    toInset,
     toRef,
   ]);
 
@@ -185,10 +229,10 @@ export function AnimatedBeam({
         d={geometry.path}
         fill="none"
         stroke={`url(#${gradientId})`}
-        strokeWidth={pathWidth + 0.5}
+        strokeWidth={movingPathWidth ?? pathWidth + 0.5}
         strokeLinecap="round"
         pathLength={100}
-        strokeDasharray="18 82"
+        strokeDasharray={movingDasharray}
         initial={{ strokeDashoffset: reverse ? -100 : 0 }}
         animate={{ strokeDashoffset: reverse ? 0 : -100 }}
         transition={{

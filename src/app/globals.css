@@ -129,6 +129,7 @@
 }
 
 @theme inline {
+  --animate-line-shadow: line-shadow 15s linear infinite;
   --animate-meteor: meteor 5s linear infinite;
   --animate-aurora: aurora 8s ease-in-out infinite alternate;
   --animate-gradient: gradient 8s linear infinite;
@@ -138,6 +139,14 @@
   --color-color-3: var(--color-3);
   --color-color-2: var(--color-2);
   --color-color-1: var(--color-1);
+  @keyframes line-shadow {
+  0% {
+    background-position: 0 0;
+    }
+  100% {
+    background-position: 100% -100%;
+    }
+  }
   @keyframes meteor {
   0% {
     transform: rotate(var(--angle)) translateX(0);
@@ -186,7 +195,41 @@
     background-position: 200%;
     }
   }
-}
+  @keyframes sparkles-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+    }
+  50% {
+    background-position: 100% 50%;
+    }
+  }
+  @keyframes sparkle-flash {
+  0%, 100% {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0) scale(0.35) rotate(0deg);
+    }
+  18% {
+    opacity: 1;
+    }
+  48% {
+    opacity: 0.95;
+    transform: translate3d(0, 0, 0) scale(1) rotate(12deg);
+    }
+  76% {
+    opacity: 0;
+    transform: translate3d(0, -8px, 0) scale(0.42) rotate(24deg);
+    }
+  }
+  --animate-blink-cursor: blink-cursor 1.2s step-end infinite
+;
+  @keyframes blink-cursor {
+  0%, 49% {
+    opacity: 1;
+    }
+  50%, 100% {
+    opacity: 0;
+    }
+  }}
 
 :root {
   --color-1: oklch(66.2% 0.225 25.9);
@@ -207,4 +250,115 @@
 ::view-transition-old(root), ::view-transition-new(root) {
     animation: none;
     mix-blend-mode: normal;
+}
+
+@keyframes dashboard-gradient-drift-1 {
+  0% {
+    transform: translate3d(-6%, -2%, 0) rotate(-8deg) scale(0.96);
+    opacity: 0.42;
+  }
+  50% {
+    transform: translate3d(8%, -8%, 0) rotate(7deg) scale(1.08);
+    opacity: 0.56;
+  }
+  100% {
+    transform: translate3d(-4%, 3%, 0) rotate(-5deg) scale(0.98);
+    opacity: 0.44;
+  }
+}
+
+@keyframes dashboard-gradient-drift-2 {
+  0% {
+    transform: translate3d(3%, -5%, 0) rotate(5deg) scale(1.02);
+    opacity: 0.38;
+  }
+  50% {
+    transform: translate3d(-7%, 7%, 0) rotate(-9deg) scale(1.1);
+    opacity: 0.52;
+  }
+  100% {
+    transform: translate3d(4%, -2%, 0) rotate(6deg) scale(1);
+    opacity: 0.4;
+  }
+}
+
+@keyframes dashboard-gradient-drift-3 {
+  0% {
+    transform: translate3d(-2%, 4%, 0) rotate(-6deg) scale(1);
+    opacity: 0.36;
+  }
+  50% {
+    transform: translate3d(6%, -6%, 0) rotate(8deg) scale(1.12);
+    opacity: 0.48;
+  }
+  100% {
+    transform: translate3d(-5%, 2%, 0) rotate(-4deg) scale(1.02);
+    opacity: 0.38;
+  }
+}
+
+.dashboard-roadmap-gradient {
+  pointer-events: none;
+  position: absolute;
+  inset: -11rem -26rem;
+  overflow: visible;
+  filter: blur(92px) saturate(1.14);
+  transform: translateZ(0);
+  will-change: transform, opacity;
+  -webkit-mask-image: radial-gradient(64% 60% at 54% 50%, black 53%, transparent 84%);
+  mask-image: radial-gradient(64% 60% at 54% 50%, black 53%, transparent 84%);
+}
+
+.dashboard-roadmap-blob {
+  position: absolute;
+  border-radius: 9999px;
+  will-change: transform, opacity;
+  transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+}
+
+.dashboard-roadmap-blob-1 {
+  left: 12%;
+  top: 18%;
+  height: 640px;
+  width: 640px;
+  background: rgba(244, 63, 94, 0.72);
+  animation: dashboard-gradient-drift-1 26s ease-in-out infinite alternate;
+}
+
+.dashboard-roadmap-blob-2 {
+  left: 42%;
+  top: 8%;
+  height: 720px;
+  width: 720px;
+  background: rgba(59, 130, 246, 0.72);
+  animation: dashboard-gradient-drift-2 33s ease-in-out infinite alternate;
+}
+
+.dashboard-roadmap-blob-3 {
+  left: 34%;
+  top: 46%;
+  height: 580px;
+  width: 580px;
+  background: rgba(99, 102, 241, 0.68);
+  animation: dashboard-gradient-drift-3 29s ease-in-out infinite alternate;
+}
+
+.dark .dashboard-roadmap-blob-1 {
+  background: rgba(244, 63, 94, 0.78);
+}
+
+.dark .dashboard-roadmap-blob-2 {
+  background: rgba(59, 130, 246, 0.8);
+}
+
+.dark .dashboard-roadmap-blob-3 {
+  background: rgba(99, 102, 241, 0.74);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-roadmap-blob-1,
+  .dashboard-roadmap-blob-2,
+  .dashboard-roadmap-blob-3 {
+    animation: none;
+  }
 }

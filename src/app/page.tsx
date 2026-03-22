@@ -76,7 +76,7 @@ export default function Home() {
       </div>
 
       {/* Main Content: Left Side Text, Right Side Mockup */}
-      <main className="z-10 w-full flex-1 flex flex-col items-center justify-center container mx-auto px-4 lg:px-8 pt-32 pb-20 lg:flex-row lg:items-start lg:justify-between lg:pb-24 gap-16 lg:gap-10">
+      <main className="z-10 w-full flex-1 flex flex-col items-center justify-center container mx-auto px-4 lg:px-8 pt-32 pb-20 lg:flex-row lg:items-start lg:justify-between lg:pb-16 gap-16 lg:gap-10">
 
         {/* Left Side: Typography & CTA */}
         <motion.div
@@ -147,7 +147,7 @@ export default function Home() {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ type: "spring", stiffness: 100, damping: 20 }}
-          className="relative mx-auto mb-12 flex w-full max-w-md items-center justify-center lg:-translate-y-32 lg:mb-0 lg:w-[58%] lg:max-w-none"
+          className="relative mx-auto mb-12 flex w-full max-w-md items-center justify-center lg:-mt-24 lg:mb-0 lg:w-[58%] lg:max-w-none"
         >
           <div className="w-full max-w-[780px]">
             <SalesFlowShowcase labels={t} />

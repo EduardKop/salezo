@@ -87,7 +87,12 @@ export function SiteHeader() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  if (pathname?.startsWith("/dashboard")) return null;
+  if (
+    pathname?.startsWith("/dashboard") ||
+    pathname?.startsWith("/sales-agents")
+  ) {
+    return null;
+  }
 
   return (
     <header

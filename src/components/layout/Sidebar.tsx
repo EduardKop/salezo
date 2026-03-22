@@ -3,28 +3,46 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Plus, ChevronRight, LayoutGrid, Link2, MoreHorizontal } from "lucide-react";
-import { motion } from "framer-motion";
+import {
+  Plus,
+  Bot,
+  ScrollText,
+  FileText,
+  ChevronDown,
+} from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import { createClient } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/hooks/useLanguage";
 
 const translations = {
   en: {
-    dashboard: "Dashboard",
-    projectsTitle: "Sales Projects",
+    dashboard: "Sales Agents",
+    projectsTitle: "Projects",
+    allScripts: "All Scripts",
     newProject: "New Project",
     connectProject: "Connect Project",
+    scriptsTitle: "Scripts",
+    scriptsWorkspace: "Scripts Workspace",
+    newScript: "Add Script",
+    connectScript: "Connect Script",
+    comingSoon: "Soon",
     showAll: "Show all",
     loading: "Loading...",
     scripts: "Scripts",
     notAdded: "Not added",
   },
   ru: {
-    dashboard: "Дашборд",
-    projectsTitle: "Проекты Продаж",
+    dashboard: "Sales Agents",
+    projectsTitle: "Проекты",
+    allScripts: "Все Скрипты",
     newProject: "Новый Проект",
     connectProject: "Подключить Проект",
+    scriptsTitle: "Скрипты",
+    scriptsWorkspace: "Рабочее пространство скриптов",
+    newScript: "Добавить Скрипт",
+    connectScript: "Подключить Скрипт",
+    comingSoon: "Скоро",
     showAll: "Все проекты",
     loading: "Загрузка...",
     scripts: "Скрипты",
@@ -44,6 +62,70 @@ export function Sidebar() {
   const pathname = usePathname();
   const [projects, setProjects] = React.useState<Project[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [projectsOpen, setProjectsOpen] = React.useState(false);
+  const [scriptsOpen, setScriptsOpen] = React.useState(false);
+  const [menuStateReady, setMenuStateReady] = React.useState(false);
+  const [allowMenuAnimation, setAllowMenuAnimation] = React.useState(false);
+  const isProjectsNodeActive =
+    pathname === "/sales-agents/projects" || pathname === "/dashboard/projects";
+  const isSalesAgentsBranchActive =
+    pathname === "/sales-agents" ||
+    pathname === "/dashboard";
+  const isScriptsBranchActive =
+    pathname === "/sales-agents/scripts" || pathname === "/dashboard/scripts";
+  const isAllScriptsNodeActive =
+    pathname === "/sales-agents/scripts/all" ||
+    pathname === "/dashboard/scripts/all";
+
+  React.useEffect(() => {
+    try {
+      const savedProjectsOpen = localStorage.getItem("sidebar:projects-open");
+      const savedScriptsOpen = localStorage.getItem("sidebar:scripts-open");
+
+      if (savedProjectsOpen !== null) {
+        setProjectsOpen(savedProjectsOpen === "true");
+      }
+      if (savedScriptsOpen !== null) {
+        setScriptsOpen(savedScriptsOpen === "true");
+      }
+    } catch {
+      // ignore localStorage errors to keep sidebar functional
+    } finally {
+      setMenuStateReady(true);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    if (!menuStateReady) {
+      return;
+    }
+    const frameId = requestAnimationFrame(() => {
+      setAllowMenuAnimation(true);
+    });
+    return () => cancelAnimationFrame(frameId);
+  }, [menuStateReady]);
+
+  React.useEffect(() => {
+    if (!menuStateReady) {
+      return;
+    }
+    try {
+      localStorage.setItem("sidebar:projects-open", String(projectsOpen));
+    } catch {
+      // ignore localStorage errors to keep sidebar functional
+    }
+  }, [projectsOpen, menuStateReady]);
+
+  React.useEffect(() => {
+    if (!menuStateReady) {
+      return;
+    }
+    try {
+      localStorage.setItem("sidebar:scripts-open", String(scriptsOpen));
+    } catch {
+      // ignore localStorage errors to keep sidebar functional
+    }
+  }, [scriptsOpen, menuStateReady]);
 
   React.useEffect(() => {
     let isMounted = true;
@@ -81,174 +163,240 @@ export function Sidebar() {
   return (
     <aside className="fixed left-0 top-12 w-[260px] h-[calc(100vh-3rem)] border-r border-neutral-200/50 dark:border-white/[0.05] bg-neutral-50/60 dark:bg-[#050505]/60 backdrop-blur-2xl z-0 overflow-y-auto hidden md:block custom-scrollbar shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)]">
       <div className="absolute inset-0 bg-gradient-to-b from-white/30 to-transparent dark:from-white/[0.02] dark:to-transparent pointer-events-none" />
-      <div className="flex flex-col gap-6 py-8 px-5 w-full h-full relative z-10">
+      <div className="flex flex-col gap-4 py-8 px-5 w-full h-full relative z-10">
         
-        {/* Main Navigation */}
-        <div className="space-y-1">
+        {/* Sales Agents Branch */}
+        <div className="space-y-2">
           <Link
-            href="/dashboard"
-            className="relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-colors group"
+            href="/sales-agents"
+            className="relative z-10 flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-colors group"
           >
-            {pathname === "/dashboard" && (
+            {isSalesAgentsBranchActive && (
               <motion.div
                 layoutId="sidebar-active"
                 className="absolute inset-0 bg-neutral-100 dark:bg-neutral-800/50 rounded-lg -z-10"
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
               />
             )}
-            <LayoutGrid className={cn(
+            <Bot className={cn(
               "w-4 h-4 transition-colors",
-              pathname === "/dashboard" ? "text-black dark:text-white" : "text-neutral-400 group-hover:text-black dark:group-hover:text-white"
+              isSalesAgentsBranchActive ? "text-black dark:text-white" : "text-neutral-400 group-hover:text-black dark:group-hover:text-white"
             )} />
             <span className={cn(
               "transition-colors",
-              pathname === "/dashboard" ? "text-black dark:text-white" : "text-neutral-500 group-hover:text-black dark:group-hover:text-white"
+              isSalesAgentsBranchActive ? "text-black dark:text-white" : "text-neutral-500 group-hover:text-black dark:group-hover:text-white"
             )}>{t.dashboard}</span>
-            {pathname === "/dashboard" && (
-              <motion.div
-                layoutId="sidebar-active-indicator"
-                className="absolute left-0 top-[20%] bottom-[20%] w-[3px] bg-black dark:bg-white rounded-r-md"
-              />
-            )}
+            <div
+              className={cn(
+                "absolute left-0 top-[20%] bottom-[20%] w-[3px] rounded-r-md transition-colors",
+                isSalesAgentsBranchActive
+                  ? "bg-[#8fc2ff]"
+                  : "bg-[#8fc2ff]/40"
+              )}
+            />
           </Link>
+
+          <div className="space-y-1 ml-4 pl-3">
+            <button
+              type="button"
+              onClick={() => setProjectsOpen((prev) => !prev)}
+              className={cn(
+                "inline-flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-[13px] font-medium transition-colors",
+                isProjectsNodeActive
+                  ? "bg-neutral-100 dark:bg-neutral-800/40 text-black dark:text-white"
+                  : "text-neutral-500 hover:text-black dark:hover:text-white hover:bg-neutral-100/60 dark:hover:bg-neutral-800/30"
+              )}
+            >
+              <FileText className="h-3.5 w-3.5 shrink-0 opacity-80" />
+              <span className="flex-1 text-left">{t.projectsTitle}</span>
+              <motion.span
+                initial={false}
+                animate={{ rotate: menuStateReady && projectsOpen ? 0 : -90 }}
+                transition={{ duration: allowMenuAnimation ? 0.2 : 0, ease: "easeOut" }}
+                className={cn(
+                  "inline-flex items-center justify-center transition-opacity",
+                  menuStateReady ? "opacity-70" : "opacity-0"
+                )}
+              >
+                <ChevronDown className="h-3.5 w-3.5" />
+              </motion.span>
+            </button>
+
+            <AnimatePresence initial={false}>
+              {projectsOpen && (
+                <motion.div
+                  key="projects-dropdown"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: allowMenuAnimation ? 0.22 : 0, ease: "easeOut" }}
+                  className="overflow-hidden"
+                >
+                  <div className="ml-3 space-y-0.5 pt-0.5">
+                    {loading ? (
+                      <div className="py-2.5 text-sm text-neutral-400 flex items-center gap-3">
+                        <div className="w-1.5 h-1.5 rounded-full bg-neutral-300 dark:bg-neutral-700 animate-pulse" />
+                        {t.loading}
+                      </div>
+                    ) : (
+                      <>
+                        <Link
+                          href="/sales-agents/projects"
+                          className="inline-flex items-center gap-1.5 rounded-md px-1 py-1.5 text-[13px] font-medium text-neutral-500 transition-colors hover:text-black dark:hover:text-white"
+                        >
+                          <span
+                            className={cn(
+                              "transition-colors",
+                              isProjectsNodeActive
+                                ? "text-black dark:text-white"
+                                : "text-neutral-500 hover:text-black dark:hover:text-white"
+                            )}
+                          >
+                            {t.showAll}
+                          </span>
+                        </Link>
+
+                        {projects.length === 0 ? (
+                          <Link
+                            href="/sales-agents/projects/new"
+                            className="inline-flex items-center gap-1.5 rounded-md px-1 py-1.5 text-[13px] font-medium text-neutral-500 transition-colors hover:text-black dark:hover:text-white"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>{t.newProject}</span>
+                          </Link>
+                        ) : (
+                          <>
+                        {projects.slice(0, 5).map((project) => {
+                          const isActive = pathname?.includes(`/projects/${project.id}`);
+                          return (
+                            <div key={project.id}>
+                              <Link
+                                href={`/sales-agents/projects/${project.id}`}
+                                className="relative flex items-center px-3 py-1.5 rounded-lg text-[13px] font-medium transition-colors group"
+                              >
+                                <span
+                                  className={cn(
+                                    "truncate transition-colors flex-1",
+                                    isActive
+                                      ? "text-black dark:text-white"
+                                      : "text-neutral-500 group-hover:text-neutral-800 dark:group-hover:text-neutral-200"
+                                  )}
+                                >
+                                  {project.name}
+                                </span>
+                              </Link>
+                            </div>
+                          );
+                        })}
+
+                          </>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
 
-        {/* Projects Section */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between px-3 group">
-            <Link 
-              href="/dashboard/projects"
-              className="text-[11px] font-semibold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest hover:text-black dark:hover:text-white transition-colors"
-            >
-              {t.projectsTitle}
-            </Link>
-            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-              <Link 
-                href="/dashboard/projects/connect"
-                className="p-1 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 hover:text-black dark:hover:text-white transition-colors"
-                title={t.connectProject}
-              >
-                <Link2 className="w-3.5 h-3.5" />
-              </Link>
-              <Link 
-                href="/dashboard/projects/new"
-                className="p-1 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 hover:text-black dark:hover:text-white transition-colors"
-                title={t.newProject}
-              >
-                <Plus className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-          </div>
-
-          <div className="space-y-0.5 relative before:absolute before:inset-y-2 before:left-[19px] before:w-[1px] before:bg-neutral-200 dark:before:bg-neutral-800/60">
-            {loading ? (
-              <div className="px-3 py-2.5 text-sm text-neutral-400 flex items-center gap-3">
-                <div className="w-1.5 h-1.5 rounded-full bg-neutral-300 dark:bg-neutral-700 animate-pulse ml-1.5" />
-                {t.loading}
-              </div>
-            ) : projects.length === 0 ? (
-              <Link
-                href="/dashboard/projects/new"
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-neutral-500 transition-all group relative"
-              >
-                <div className="w-1.5 h-1.5 rounded-full border border-neutral-300 dark:border-neutral-700 ml-1.5 bg-white dark:bg-[#000000] z-10 group-hover:border-black dark:group-hover:border-white transition-colors" />
-                <span className="group-hover:text-black dark:group-hover:text-white transition-colors flex items-center gap-2">
-                  <Plus className="w-3.5 h-3.5" />
-                  {t.newProject}
-                </span>
-                <div className="absolute inset-0 border border-dashed border-neutral-200 dark:border-neutral-800 rounded-lg pointer-events-none group-hover:border-neutral-300 dark:group-hover:border-neutral-700 transition-colors" />
-              </Link>
-            ) : (
-              <>
-                {projects.slice(0, 5).map((project) => {
-                  const isActive = pathname?.includes(`/projects/${project.id}`);
-                  // Module subitems — extend this array as new modules are added
-                  const modules = [
-                    { key: "scripts", label: t.scripts, href: `/dashboard/projects/${project.id}/scripts`, hasContent: false },
-                  ];
-                  return (
-                    <div key={project.id}>
-                      <Link
-                        href={`/dashboard/projects/${project.id}`}
-                        className="relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-colors group"
-                      >
-                        {isActive && (
-                          <motion.div
-                            layoutId="sidebar-active"
-                            className="absolute inset-0 bg-neutral-100 dark:bg-neutral-800/50 rounded-lg -z-10"
-                            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                          />
-                        )}
-                        <div className={cn(
-                          "w-1.5 h-1.5 rounded-full border ml-1.5 z-10 transition-colors bg-white dark:bg-[#000000]",
-                          isActive
-                            ? "border-black dark:border-white bg-black dark:bg-white"
-                            : "border-neutral-300 dark:border-neutral-700 group-hover:border-neutral-500 dark:group-hover:border-neutral-400"
-                        )} />
-                        <span className={cn(
-                          "truncate transition-colors flex-1",
-                          isActive ? "text-black dark:text-white" : "text-neutral-500 group-hover:text-neutral-800 dark:group-hover:text-neutral-200"
-                        )}>
-                          {project.name}
-                        </span>
-                        {isActive && (
-                          <motion.div
-                            layoutId="sidebar-active-indicator"
-                            className="absolute left-0 top-[20%] bottom-[20%] w-[3px] bg-black dark:bg-white rounded-r-md"
-                          />
-                        )}
-                      </Link>
-
-                      {/* Module sub-links shown when project is active */}
-                      {isActive && (
-                        <motion.div
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: "auto" }}
-                          exit={{ opacity: 0, height: 0 }}
-                          className="ml-7 mt-0.5 space-y-0.5 overflow-hidden"
-                        >
-                          {modules.map((mod) => {
-                            const modActive = pathname === mod.href;
-                            return (
-                              <Link
-                                key={mod.key}
-                                href={mod.href}
-                                className={cn(
-                                  "flex items-center justify-between px-2.5 py-1.5 rounded-md text-[12px] font-medium transition-colors group/mod",
-                                  modActive
-                                    ? "bg-neutral-100 dark:bg-neutral-800/60 text-black dark:text-white"
-                                    : "text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200 hover:bg-neutral-100/60 dark:hover:bg-neutral-800/30"
-                                )}
-                              >
-                                <span>{mod.label}</span>
-                                {!mod.hasContent && (
-                                  <span className="text-[10px] text-neutral-400 dark:text-neutral-600 font-normal">
-                                    {t.notAdded}
-                                  </span>
-                                )}
-                              </Link>
-                            );
-                          })}
-                        </motion.div>
-                      )}
-                    </div>
-                  );
-                })}
-                
-                {projects.length > 5 && (
-                  <Link
-                    href="/dashboard/projects"
-                    className="relative flex items-center gap-3 px-3 py-2 mt-1 rounded-lg text-[12px] font-semibold transition-colors group text-neutral-400 hover:text-black dark:hover:text-white hover:bg-neutral-50 dark:hover:bg-neutral-900/50"
-                  >
-                    <div className="w-1.5 h-1.5 rounded-full bg-transparent ml-1.5 z-10 flex items-center justify-center">
-                      <MoreHorizontal className="w-3 h-3 text-neutral-400 group-hover:text-black dark:group-hover:text-white" />
-                    </div>
-                    <span>{t.showAll}</span>
-                    <ChevronRight className="w-3 h-3 opacity-0 -ml-2 group-hover:opacity-100 group-hover:ml-auto transition-all text-neutral-400" />
-                  </Link>
-                )}
-              </>
+        {/* Scripts Branch */}
+        <div className="space-y-2">
+          <Link
+            href="/sales-agents/scripts"
+            className="relative z-10 flex min-w-0 items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-colors group"
+          >
+            {isScriptsBranchActive && (
+              <motion.div
+                layoutId="sidebar-active"
+                className="absolute inset-0 bg-neutral-100 dark:bg-neutral-800/50 rounded-lg -z-10"
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              />
             )}
+            <ScrollText className={cn(
+              "w-4 h-4 transition-colors",
+              isScriptsBranchActive ? "text-black dark:text-white" : "text-neutral-400 group-hover:text-black dark:group-hover:text-white"
+            )} />
+            <span className={cn(
+              "truncate transition-colors",
+              isScriptsBranchActive ? "text-black dark:text-white" : "text-neutral-500 group-hover:text-black dark:group-hover:text-white"
+            )}>
+              {t.scriptsTitle}
+            </span>
+            <div
+              className={cn(
+                "absolute left-0 top-[20%] bottom-[20%] w-[3px] rounded-r-md transition-colors",
+                isScriptsBranchActive
+                  ? "bg-[#8fe0b5]"
+                  : "bg-[#8fe0b5]/40"
+              )}
+            />
+          </Link>
+
+          <div className="space-y-1 ml-4 pl-3">
+            <button
+              type="button"
+              onClick={() => setScriptsOpen((prev) => !prev)}
+              className={cn(
+                "inline-flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-[13px] font-medium transition-colors",
+                isAllScriptsNodeActive
+                  ? "bg-neutral-100 dark:bg-neutral-800/40 text-black dark:text-white"
+                  : "text-neutral-500 hover:text-black dark:hover:text-white hover:bg-neutral-100/60 dark:hover:bg-neutral-800/30"
+              )}
+            >
+              <FileText className="h-3.5 w-3.5 shrink-0 opacity-80" />
+              <span className="flex-1 text-left">{t.allScripts}</span>
+              <motion.span
+                initial={false}
+                animate={{ rotate: menuStateReady && scriptsOpen ? 0 : -90 }}
+                transition={{ duration: allowMenuAnimation ? 0.2 : 0, ease: "easeOut" }}
+                className={cn(
+                  "inline-flex items-center justify-center transition-opacity",
+                  menuStateReady ? "opacity-70" : "opacity-0"
+                )}
+              >
+                <ChevronDown className="h-3.5 w-3.5" />
+              </motion.span>
+            </button>
+
+            <AnimatePresence initial={false}>
+              {scriptsOpen && (
+                <motion.div
+                  key="scripts-dropdown"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: allowMenuAnimation ? 0.22 : 0, ease: "easeOut" }}
+                  className="overflow-hidden"
+                >
+                  <div className="ml-3 flex flex-col space-y-0.5 pt-0.5">
+                    <Link
+                      href="/sales-agents/scripts/all"
+                      className="flex w-full items-center gap-1.5 rounded-md px-1 py-1.5 text-[13px] font-medium text-neutral-500 transition-colors hover:text-black dark:hover:text-white"
+                    >
+                      <span
+                        className={cn(
+                          "transition-colors",
+                          isAllScriptsNodeActive
+                            ? "text-black dark:text-white"
+                            : "text-neutral-500 hover:text-black dark:hover:text-white"
+                        )}
+                      >
+                        {t.allScripts}
+                      </span>
+                    </Link>
+
+                    <Link
+                      href="/sales-agents/scripts/new"
+                      className="flex w-full items-center gap-1.5 rounded-md px-1 py-1.5 text-[13px] font-medium text-neutral-500 transition-colors hover:text-black dark:hover:text-white"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>{t.newScript}</span>
+                    </Link>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
 

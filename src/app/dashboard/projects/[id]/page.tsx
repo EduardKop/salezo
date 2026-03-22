@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase";
 import { useLanguage } from "@/hooks/useLanguage";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { PageLoader } from "@/components/ui/page-loader";
 import {
   isProductInfoList,
   isStringList,
@@ -376,18 +377,19 @@ export default function ProjectPage() {
     }
   };
 
-  if (!mounted) return null;
-  if (isLoading) return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] w-full p-8">
-      <Loader2 className="w-8 h-8 animate-spin text-blue-500 mb-4" />
-      <p className="text-neutral-500 text-sm font-medium">{t.loading}</p>
-    </div>
-  );
+  if (!mounted || isLoading) {
+    return (
+      <PageLoader
+        className="min-h-[calc(100vh-5rem)]"
+        label={mounted ? t.loading : undefined}
+      />
+    );
+  }
   if (error || !project) return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] w-full p-8 relative">
       <FolderGit2 className="w-16 h-16 text-neutral-300 dark:text-neutral-700 mb-6" />
       <h2 className="text-xl font-bold tracking-tight mb-2 text-neutral-900 dark:text-neutral-100">{t.notFound}</h2>
-      <Link href="/dashboard/projects" className="mt-6 inline-flex items-center gap-2 px-4 py-2 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-900 dark:text-neutral-100 rounded-lg text-sm font-medium transition-colors">
+      <Link href="/sales-agents/projects" className="mt-6 inline-flex items-center gap-2 px-4 py-2 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-900 dark:text-neutral-100 rounded-lg text-sm font-medium transition-colors">
         <ArrowLeft className="w-4 h-4" />{t.back}
       </Link>
     </div>
@@ -444,7 +446,7 @@ export default function ProjectPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8 pb-6 border-b border-neutral-200 dark:border-neutral-800">
           <div className="flex items-center gap-4">
-            <Link href="/dashboard/projects" className="p-2 -ml-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-500 hover:text-black dark:hover:text-white transition-colors" title={t.back}>
+            <Link href="/sales-agents/projects" className="p-2 -ml-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-500 hover:text-black dark:hover:text-white transition-colors" title={t.back}>
               <ArrowLeft className="w-5 h-5" />
             </Link>
             <div>
@@ -469,7 +471,7 @@ export default function ProjectPage() {
           <div className="lg:col-span-2 space-y-3">
             {/* Scripts module */}
             <Link
-              href={`/dashboard/projects/${project.id}/scripts`}
+              href={`/sales-agents/projects/${project.id}/scripts`}
               className="group flex items-center justify-between w-full bg-white dark:bg-[#000000] border border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700 rounded-xl px-5 py-4 transition-all hover:shadow-sm"
             >
               <div className="flex items-center gap-3">

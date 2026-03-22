@@ -6,7 +6,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/dashboard/", "/api/"],
+        disallow: ["/dashboard/", "/sales-agents/", "/api/"],
       },
     ],
     sitemap: "https://salezo.io/sitemap.xml",
