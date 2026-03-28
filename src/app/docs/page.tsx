@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpenText, Sparkles } from "lucide-react";
+import { BookOpenText, Sparkle as Sparkles } from "@phosphor-icons/react";
 import { useLanguage, type Language } from "@/hooks/useLanguage";
 import { docs as translations, t as getT } from "@/lib/i18n/translations";
 

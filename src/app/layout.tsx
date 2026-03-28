@@ -43,7 +43,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Salezo",
     description: "The ultimate platform for sales teams. Manage projects, track metrics, and grow faster.",
-    url: "https://salezo.io", // TODO: update when domain is confirmed
+    url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://salezo.io",
     siteName: "Salezo",
     locale: "ru_RU",
     type: "website",
@@ -81,6 +81,7 @@ export default async function RootLayout({
             attribute="class"
             defaultTheme="system"
             enableSystem
+            disableTransitionOnChange
           >
             <SiteHeader />
             <main className="flex-1 w-full">

@@ -2,7 +2,16 @@
 
 import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Loader2, ArrowLeft, Settings, FolderGit2, X, Save, Check, Plus } from "lucide-react";
+import {
+  CircleNotch as Loader2,
+  ArrowLeft,
+  Gear as Settings,
+  Folder as FolderGit2,
+  X,
+  FloppyDisk as Save,
+  Check,
+  Plus,
+} from "@phosphor-icons/react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/lib/supabase";
@@ -41,6 +50,7 @@ const translations = {
     addCountry: "Add country...",
     scripts: "Scripts",
     notAdded: "Not added",
+    nScripts: "Scripts: "
   },
   ru: {
     back: "К списку проектов",
@@ -63,6 +73,7 @@ const translations = {
     addCountry: "Добавить страну...",
     scripts: "Скрипты",
     notAdded: "Не добавлено",
+    nScripts: "Скриптов: "
   }
 };
 
@@ -302,6 +313,7 @@ export default function ProjectPage() {
   const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const [scriptCount, setScriptCount] = React.useState<number>(0);
 
   // settings modal
   const [settingsOpen, setSettingsOpen] = React.useState(false);
@@ -323,7 +335,17 @@ export default function ProjectPage() {
         const { data, error } = await supabase
           .from("projects").select("*").eq("id", id).single();
         if (error) throw error;
-        if (alive) { setProject(data as Project); setIsLoading(false); }
+        
+        const { count: scriptsCount } = await supabase
+          .from("scripts")
+          .select("*", { count: "exact", head: true })
+          .eq("project_id", id);
+          
+        if (alive) { 
+          setProject(data as Project); 
+          setScriptCount(scriptsCount || 0);
+          setIsLoading(false); 
+        }
       } catch (error) {
         if (alive) {
           setError(getErrorMessage(error, "Failed to load project"));
@@ -440,8 +462,8 @@ export default function ProjectPage() {
   };
 
   return (
-    <div className="w-full relative min-h-screen pb-20">
-      <div className="p-4 md:p-8 max-w-[1200px] mx-auto w-full pt-8 relative z-10">
+    <div className="flex-1 w-full flex flex-col relative min-h-screen pb-20">
+      <div className="w-full flex-1 flex flex-col p-6 md:p-8 lg:p-12 relative z-10">
 
         {/* Header */}
         <div className="flex items-center justify-between mb-8 pb-6 border-b border-neutral-200 dark:border-neutral-800">
@@ -472,10 +494,10 @@ export default function ProjectPage() {
             {/* Scripts module */}
             <Link
               href={`/sales-agents/projects/${project.id}/scripts`}
-              className="group flex items-center justify-between w-full bg-white dark:bg-[#000000] border border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700 rounded-xl px-5 py-4 transition-all hover:shadow-sm"
+              className="group flex items-center justify-between w-full bg-white dark:bg-[#111] border border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700 rounded-xl px-5 py-4 transition-colors"
             >
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-900 flex items-center justify-center group-hover:bg-neutral-200 dark:group-hover:bg-neutral-800 transition-colors">
+                <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-[#1a1a1a] border border-transparent dark:border-neutral-800 flex items-center justify-center transition-colors group-hover:dark:border-neutral-700">
                   <svg className="w-4 h-4 text-neutral-500 dark:text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5" />
                   </svg>
@@ -483,7 +505,12 @@ export default function ProjectPage() {
                 <span className="text-[14px] font-semibold text-neutral-900 dark:text-neutral-100">{t.scripts}</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-[11px] text-neutral-400 dark:text-neutral-600 font-medium">{t.notAdded}</span>
+                <span className={cn(
+                  "text-[11px] font-medium",
+                  scriptCount > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-neutral-400 dark:text-neutral-600"
+                )}>
+                  {scriptCount > 0 ? `${t.nScripts}${scriptCount}` : t.notAdded}
+                </span>
                 <svg className="w-4 h-4 text-neutral-300 dark:text-neutral-700 group-hover:text-neutral-500 dark:group-hover:text-neutral-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
                 </svg>
@@ -491,7 +518,7 @@ export default function ProjectPage() {
             </Link>
           </div>
 
-          <div className="bg-white dark:bg-[#000000] border border-neutral-200 dark:border-neutral-800 rounded-xl p-6 shadow-sm h-fit">
+          <div className="bg-white dark:bg-[#111] border border-neutral-200 dark:border-neutral-800 rounded-xl p-6 h-fit">
             <h3 className="text-[14px] font-semibold text-neutral-900 dark:text-neutral-100 mb-4 pb-4 border-b border-neutral-200 dark:border-neutral-800 uppercase tracking-widest">
               {t.details}
             </h3>
@@ -503,7 +530,7 @@ export default function ProjectPage() {
                 if (key === "products" && isProductInfoList(detail.information) && detail.information.length > 0) {
                   return (
                     <div key={idx} className="flex flex-col gap-2">
-                      <span className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider">
+                      <span className="font-mono text-[10px] text-neutral-500 uppercase tracking-wider">
                         {translateFieldName(detail.name, language)}
                       </span>
                       <div className="flex flex-wrap gap-1">
@@ -527,7 +554,7 @@ export default function ProjectPage() {
                 if (key === "countries" && isStringList(detail.information) && detail.information.length > 0) {
                   return (
                     <div key={idx} className="flex flex-col gap-2">
-                      <span className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider">
+                      <span className="font-mono text-[10px] text-neutral-500 uppercase tracking-wider">
                         {translateFieldName(detail.name, language)}
                       </span>
                       <div className="flex flex-wrap gap-1">
@@ -547,8 +574,8 @@ export default function ProjectPage() {
                 const valStr = formatDetailValue(detail);
                 if (!valStr || valStr === "0" || valStr === "false") return null;
                 return (
-                  <div key={idx} className="flex flex-col gap-1">
-                    <span className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider">
+                  <div key={idx} className="flex flex-col gap-1.5">
+                    <span className="font-mono text-[10px] text-neutral-500 uppercase tracking-wider">
                       {translateFieldName(detail.name, language)}
                     </span>
                     <span className="text-[13px] text-neutral-900 dark:text-neutral-100 leading-relaxed font-medium">{valStr}</span>
@@ -573,7 +600,7 @@ export default function ProjectPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/50 backdrop-blur-sm dark:bg-black/70"
+              className="absolute inset-0 bg-neutral-900/40 dark:bg-black/60"
               onClick={() => setSettingsOpen(false)}
             />
 
@@ -582,15 +609,12 @@ export default function ProjectPage() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 16 }}
               transition={{ type: "spring", stiffness: 300, damping: 28 }}
-              className="relative w-full max-w-2xl bg-white dark:bg-[#0a0a0a] border border-neutral-200 dark:border-neutral-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+              className="relative w-full max-w-2xl bg-white dark:bg-[#111] border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]"
             >
-              {/* Rainbow top bar */}
-              <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500" />
-
               {/* Header */}
-              <div className="flex items-center justify-between px-6 py-5 border-b border-neutral-200 dark:border-neutral-800 shrink-0">
+              <div className="flex items-center justify-between px-6 py-5 border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-[#161616] shrink-0">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+                  <div className="w-9 h-9 rounded-xl bg-neutral-100 dark:bg-[#111] border border-transparent dark:border-neutral-800 flex items-center justify-center">
                     <Settings className="w-4 h-4 text-neutral-600 dark:text-neutral-300" />
                   </div>
                   <div>
@@ -694,7 +718,7 @@ export default function ProjectPage() {
               </div>
 
               {/* Footer */}
-              <div className="px-6 py-4 border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/30 shrink-0 flex items-center justify-end gap-3">
+              <div className="px-6 py-4 border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-[#161616] shrink-0 flex items-center justify-end gap-3">
                 <button onClick={() => setSettingsOpen(false)} className="px-4 py-2 text-[13px] font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors">
                   {t.cancel}
                 </button>

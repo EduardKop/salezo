@@ -1,6 +1,4 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
+# ─── Dependencies ────────────────────────────────────────────────────────────
 /node_modules
 /.pnp
 .pnp.*
@@ -10,35 +8,54 @@
 !.yarn/releases
 !.yarn/versions
 
-# testing
-/coverage
-
-# next.js
+# ─── Next.js build output ────────────────────────────────────────────────────
 /.next/
 /out/
-
-# production
 /build
 
-# misc
+# ─── Testing ─────────────────────────────────────────────────────────────────
+/coverage
+
+# ─── Environment variables ───────────────────────────────────────────────────
+# Never commit secrets — set them in Railway dashboard
+.env
+.env.local
+.env.development
+.env.development.local
+.env.test
+.env.test.local
+.env.production
+.env.production.local
+
+# ─── TypeScript ──────────────────────────────────────────────────────────────
+*.tsbuildinfo
+next-env.d.ts
+
+# ─── OS / Editor ─────────────────────────────────────────────────────────────
 .DS_Store
+.DS_Store?
+._*
+Thumbs.db
 *.pem
 
-# debug
+# ─── Debug logs ──────────────────────────────────────────────────────────────
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+lerna-debug.log*
 
-# supabase local temp
+# ─── Supabase local ──────────────────────────────────────────────────────────
 supabase/.temp/
+# Dashboard SQL helper (local use only, not part of migrations)
+supabase/run_in_dashboard.sql
+supabase_rls_fix.sql
 
-# env files (can opt-in for committing if needed)
-.env*
+# ─── Misc local scripts ──────────────────────────────────────────────────────
+query.js
 
-# vercel
+# ─── Vercel (not used, keep just in case) ────────────────────────────────────
 .vercel
 
-# typescript
-*.tsbuildinfo
-next-env.d.ts
+# ─── Railway (keep railway.toml — it IS committed) ───────────────────────────
+# railway.toml is intentionally NOT ignored

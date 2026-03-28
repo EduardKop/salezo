@@ -4,17 +4,17 @@ import * as React from "react";
 import Link from "next/link";
 import {
   ArrowRight,
-  Bot,
-  CheckCircle2,
+  Robot as Bot,
+  CheckCircle as CheckCircle2,
   CircleDashed,
   Database,
   FolderPlus,
   Lock,
-  LockKeyhole,
-  ScrollText,
-  UsersRound,
+  LockKey as LockKeyhole,
+  Scroll as ScrollText,
+  UsersThree as UsersRound,
   Wrench,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase";
 import { AnimatedBeam } from "@/components/ui/animated-beam";
 import { PageLoader } from "@/components/ui/page-loader";
@@ -107,12 +107,12 @@ function hasAnyKeyword(tokens: string[], keywords: readonly string[]): boolean {
   return tokens.some((token) => keywords.some((keyword) => token.includes(keyword)));
 }
 
-function buildRawCompletion(projects: DbProject[]): Record<StepKey, boolean> {
+function buildRawCompletion(projects: DbProject[], scriptCountByProject: Record<string, number>): Record<StepKey, boolean> {
   const tokens = collectDetailNameTokens(projects);
 
   return {
     project: projects.length > 0,
-    scripts: hasAnyKeyword(tokens, [
+    scripts: projects.some(p => (scriptCountByProject[p.id] ?? 0) > 0) || hasAnyKeyword(tokens, [
       "script",
       "scripts",
       "скрипт",
@@ -455,6 +455,7 @@ export default function DashboardPage() {
   const [errorKey, setErrorKey] = React.useState<ErrorKey>(null);
   const [projects, setProjects] = React.useState<DbProject[]>([]);
   const [members, setMembers] = React.useState<DbProjectMember[]>([]);
+  const [scriptCounts, setScriptCounts] = React.useState<Record<string, number>>({});
 
   const loadDashboardState = React.useCallback(async () => {
     setLoading(true);
@@ -505,6 +506,20 @@ export default function DashboardPage() {
       }
 
       setMembers((membersData ?? []) as DbProjectMember[]);
+
+      // Also fetch script counts
+      const { data: scriptsData } = await supabase
+        .from("scripts")
+        .select("project_id");
+      
+      const counts: Record<string, number> = {};
+      for (const s of (scriptsData || [])) {
+        if (s.project_id) {
+          counts[s.project_id] = (counts[s.project_id] || 0) + 1;
+        }
+      }
+      setScriptCounts(counts);
+
       setLoading(false);
     } catch (error) {
       console.error("Dashboard state load failed:", error);
@@ -605,8 +620,8 @@ export default function DashboardPage() {
   );
 
   const rawCompletion = React.useMemo(
-    () => buildRawCompletion(projects),
-    [projects]
+    () => buildRawCompletion(projects, scriptCounts),
+    [projects, scriptCounts]
   );
 
   const steps = React.useMemo(
@@ -730,9 +745,9 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 pb-10 pt-6 md:px-8 md:pb-14 md:pt-8">
-      <div className="mb-5 text-center md:mb-6">
-        <h1 className="mx-auto max-w-4xl text-2xl font-bold tracking-tight text-black dark:text-white md:text-4xl">
+    <div className="mx-auto w-full max-w-6xl px-3 pb-10 pt-5 sm:px-4 md:px-6 md:pb-14 md:pt-7 xl:px-8 xl:pt-8">
+      <div className="mb-4 text-center md:mb-6">
+        <h1 className="mx-auto max-w-4xl text-[1.7rem] font-bold leading-tight tracking-tight text-black dark:text-white sm:text-3xl md:text-4xl">
           {t.title}
         </h1>
       </div>
@@ -771,12 +786,12 @@ export default function DashboardPage() {
               <Link
                 key={project.id}
                 href={`/sales-agents/projects/${project.id}`}
-                className="flex items-center justify-between rounded-xl border border-black/10 bg-white/80 px-4 py-3 transition-colors hover:border-black/20 hover:bg-white dark:border-white/10 dark:bg-black/30 dark:hover:border-white/20 dark:hover:bg-black/40"
+                className="flex flex-col gap-2 rounded-xl border border-black/10 bg-white/80 px-4 py-3 transition-colors hover:border-black/20 hover:bg-white dark:border-white/10 dark:bg-black/30 dark:hover:border-white/20 dark:hover:bg-black/40 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-black dark:text-white">{project.name}</p>
                 </div>
-                <div className="ml-4 inline-flex items-center gap-1.5 text-xs font-medium text-black/70 dark:text-white/70">
+                <div className="inline-flex items-center gap-1.5 text-xs font-medium text-black/70 dark:text-white/70 sm:ml-4">
                   <UsersRound className="h-3.5 w-3.5" />
                   {memberCountByProject[project.id] ?? 1} {t.users}
                   <span className="ml-1 text-blue-700 dark:text-blue-200">{t.openProject}</span>
@@ -787,7 +802,7 @@ export default function DashboardPage() {
         </div>
       ) : (
         <div className="relative">
-          <div className="grid grid-cols-1 gap-2.5 md:hidden">
+          <div className="mx-auto grid max-w-3xl grid-cols-1 gap-2.5 sm:gap-3 xl:hidden">
             {steps.map((step, index) => (
               <JourneyNode
                 key={step.key}
@@ -803,7 +818,7 @@ export default function DashboardPage() {
 
           <div
             ref={desktopContainerRef}
-            className="relative hidden h-[760px] overflow-visible md:block"
+            className="relative hidden h-[760px] overflow-visible xl:block"
           >
             <div aria-hidden="true" className="dashboard-roadmap-gradient">
               <div className="dashboard-roadmap-blob dashboard-roadmap-blob-1" />

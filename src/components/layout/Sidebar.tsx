@@ -5,13 +5,16 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Plus,
-  Bot,
-  ScrollText,
+  Robot as Bot,
+  Scroll as ScrollText,
   FileText,
-  ChevronDown,
-} from "lucide-react";
+  CaretDown as ChevronDown,
+  SquaresFour,
+  ListDashes,
+} from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { createClient } from "@/lib/supabase";
+import { getAccessibleScriptsAction } from "@/app/actions/scripts";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/hooks/useLanguage";
 
@@ -27,10 +30,12 @@ const translations = {
     newScript: "Add Script",
     connectScript: "Connect Script",
     comingSoon: "Soon",
-    showAll: "Show all",
+    showAllProjects: "All projects",
+    showAllScripts: "All scripts",
     loading: "Loading...",
     scripts: "Scripts",
     notAdded: "Not added",
+    untitledScript: "Untitled script",
   },
   ru: {
     dashboard: "Sales Agents",
@@ -43,10 +48,12 @@ const translations = {
     newScript: "Добавить Скрипт",
     connectScript: "Подключить Скрипт",
     comingSoon: "Скоро",
-    showAll: "Все проекты",
+    showAllProjects: "Все проекты",
+    showAllScripts: "Все скрипты",
     loading: "Загрузка...",
     scripts: "Скрипты",
     notAdded: "Не добавлено",
+    untitledScript: "Скрипт без названия",
   }
 };
 
@@ -55,12 +62,23 @@ type Project = {
   name: string;
 };
 
-export function Sidebar() {
+type Script = {
+  id: string;
+  title: string | null;
+};
+
+type SidebarProps = {
+  mobileOpen?: boolean;
+  onNavigate?: () => void;
+};
+
+export function Sidebar({ mobileOpen = false, onNavigate }: SidebarProps) {
   const { language, mounted } = useLanguage();
   const t = mounted ? translations[language as keyof typeof translations] : translations.ru;
 
   const pathname = usePathname();
   const [projects, setProjects] = React.useState<Project[]>([]);
+  const [scripts, setScripts] = React.useState<Script[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [projectsOpen, setProjectsOpen] = React.useState(false);
   const [scriptsOpen, setScriptsOpen] = React.useState(false);
@@ -131,27 +149,25 @@ export function Sidebar() {
     let isMounted = true;
     const supabase = createClient();
 
-    async function loadProjects() {
-      const { data, error } = await supabase
-        .from('projects')
-        .select('id, name')
-        .order('created_at', { ascending: false });
+    async function loadData() {
+      const [{ data: projectsData, error: pErr }, scriptsData] = await Promise.all([
+        supabase.from('projects').select('id, name').order('created_at', { ascending: false }),
+        getAccessibleScriptsAction(),
+      ]);
         
-      if (!error && data && isMounted) {
-        setProjects(data);
+      if (isMounted) {
+        if (!pErr && projectsData) setProjects(projectsData);
+        setScripts(scriptsData);
+        setLoading(false);
       }
-      if (isMounted) setLoading(false);
     }
     
-    loadProjects();
+    loadData();
 
-    const channel = supabase.channel('sidebar-projects')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, () => {
-        loadProjects();
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'project_members' }, () => {
-        loadProjects();
-      })
+    const channel = supabase.channel('sidebar-data')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, loadData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'project_members' }, loadData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'scripts' }, loadData)
       .subscribe();
 
     return () => {
@@ -161,7 +177,12 @@ export function Sidebar() {
   }, []);
 
   return (
-    <aside className="fixed left-0 top-12 w-[260px] h-[calc(100vh-3rem)] border-r border-neutral-200/50 dark:border-white/[0.05] bg-neutral-50/60 dark:bg-[#050505]/60 backdrop-blur-2xl z-0 overflow-y-auto hidden md:block custom-scrollbar shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)]">
+    <aside
+      className={cn(
+        "fixed left-0 top-12 w-[260px] h-[calc(100vh-3rem)] border-r border-neutral-200/50 dark:border-white/[0.05] bg-neutral-50/60 dark:bg-[#050505]/60 backdrop-blur-2xl z-40 overflow-y-auto custom-scrollbar shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)] transition-transform duration-300 ease-out md:z-0",
+        mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+      )}
+    >
       <div className="absolute inset-0 bg-gradient-to-b from-white/30 to-transparent dark:from-white/[0.02] dark:to-transparent pointer-events-none" />
       <div className="flex flex-col gap-4 py-8 px-5 w-full h-full relative z-10">
         
@@ -169,6 +190,7 @@ export function Sidebar() {
         <div className="space-y-2">
           <Link
             href="/sales-agents"
+            onClick={onNavigate}
             className="relative z-10 flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-colors group"
           >
             {isSalesAgentsBranchActive && (
@@ -242,36 +264,33 @@ export function Sidebar() {
                       <>
                         <Link
                           href="/sales-agents/projects"
-                          className="inline-flex items-center gap-1.5 rounded-md px-1 py-1.5 text-[13px] font-medium text-neutral-500 transition-colors hover:text-black dark:hover:text-white"
+                          onClick={onNavigate}
+                          className="mb-2 flex w-full items-center gap-2 rounded-md bg-neutral-100/50 px-3 py-2 text-[12px] font-semibold text-neutral-600 transition-colors hover:bg-neutral-200/50 hover:text-neutral-900 dark:bg-neutral-800/30 dark:text-neutral-400 dark:hover:bg-neutral-800/60 dark:hover:text-neutral-200"
                         >
-                          <span
-                            className={cn(
-                              "transition-colors",
-                              isProjectsNodeActive
-                                ? "text-black dark:text-white"
-                                : "text-neutral-500 hover:text-black dark:hover:text-white"
-                            )}
-                          >
-                            {t.showAll}
-                          </span>
+                          <SquaresFour className="h-3.5 w-3.5" weight="bold" />
+                          <span>{t.showAllProjects}</span>
                         </Link>
 
-                        {projects.length === 0 ? (
+                        {projects.length === 0 && (
                           <Link
                             href="/sales-agents/projects/new"
+                            onClick={onNavigate}
                             className="inline-flex items-center gap-1.5 rounded-md px-1 py-1.5 text-[13px] font-medium text-neutral-500 transition-colors hover:text-black dark:hover:text-white"
                           >
                             <Plus className="w-3.5 h-3.5" />
                             <span>{t.newProject}</span>
                           </Link>
-                        ) : (
-                          <>
-                        {projects.slice(0, 5).map((project) => {
+                        )}
+
+                        {projects.length > 0 && (
+                          <div className="pt-0.5 mt-0.5">
+                            {projects.slice(0, 5).map((project) => {
                           const isActive = pathname?.includes(`/projects/${project.id}`);
                           return (
                             <div key={project.id}>
                               <Link
                                 href={`/sales-agents/projects/${project.id}`}
+                                onClick={onNavigate}
                                 className="relative flex items-center px-3 py-1.5 rounded-lg text-[13px] font-medium transition-colors group"
                               >
                                 <span
@@ -288,8 +307,7 @@ export function Sidebar() {
                             </div>
                           );
                         })}
-
-                          </>
+                          </div>
                         )}
                       </>
                     )}
@@ -304,6 +322,7 @@ export function Sidebar() {
         <div className="space-y-2">
           <Link
             href="/sales-agents/scripts"
+            onClick={onNavigate}
             className="relative z-10 flex min-w-0 items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-colors group"
           >
             {isScriptsBranchActive && (
@@ -369,30 +388,63 @@ export function Sidebar() {
                   transition={{ duration: allowMenuAnimation ? 0.22 : 0, ease: "easeOut" }}
                   className="overflow-hidden"
                 >
-                  <div className="ml-3 flex flex-col space-y-0.5 pt-0.5">
-                    <Link
-                      href="/sales-agents/scripts/all"
-                      className="flex w-full items-center gap-1.5 rounded-md px-1 py-1.5 text-[13px] font-medium text-neutral-500 transition-colors hover:text-black dark:hover:text-white"
-                    >
-                      <span
-                        className={cn(
-                          "transition-colors",
-                          isAllScriptsNodeActive
-                            ? "text-black dark:text-white"
-                            : "text-neutral-500 hover:text-black dark:hover:text-white"
-                        )}
-                      >
-                        {t.allScripts}
-                      </span>
-                    </Link>
+                  <div className="ml-3 space-y-0.5 pt-0.5">
+                    {loading ? (
+                      <div className="py-2.5 text-sm text-neutral-400 flex items-center gap-3">
+                        <div className="w-1.5 h-1.5 rounded-full bg-neutral-300 dark:bg-neutral-700 animate-pulse" />
+                        {t.loading}
+                      </div>
+                    ) : (
+                      <>
+                        <Link
+                          href="/sales-agents/scripts/all"
+                          onClick={onNavigate}
+                          className="mb-2 flex w-full items-center gap-2 rounded-md bg-neutral-100/50 px-3 py-2 text-[12px] font-semibold text-neutral-600 transition-colors hover:bg-neutral-200/50 hover:text-neutral-900 dark:bg-neutral-800/30 dark:text-neutral-400 dark:hover:bg-neutral-800/60 dark:hover:text-neutral-200"
+                        >
+                          <ListDashes className="h-3.5 w-3.5" weight="bold" />
+                          <span>{t.showAllScripts}</span>
+                        </Link>
 
-                    <Link
-                      href="/sales-agents/scripts/new"
-                      className="flex w-full items-center gap-1.5 rounded-md px-1 py-1.5 text-[13px] font-medium text-neutral-500 transition-colors hover:text-black dark:hover:text-white"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>{t.newScript}</span>
-                    </Link>
+                        {scripts.length === 0 && (
+                          <Link
+                            href="/sales-agents/scripts/new"
+                            onClick={onNavigate}
+                            className="flex w-full items-center gap-1.5 rounded-md px-3 py-1.5 text-[13px] font-medium text-neutral-500 transition-colors hover:text-black dark:hover:text-white"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>{t.newScript}</span>
+                          </Link>
+                        )}
+
+                        {scripts.length > 0 && (
+                          <div className="pt-0.5 mt-0.5">
+                            {scripts.slice(0, 5).map((script) => {
+                              const isActive = pathname?.includes(`/scripts/${script.id}`);
+                              return (
+                                <div key={script.id}>
+                                  <Link
+                                    href={`/sales-agents/scripts/${script.id}/chat`}
+                                    onClick={onNavigate}
+                                    className="relative flex items-center px-3 py-1.5 rounded-lg text-[13px] font-medium transition-colors group"
+                                  >
+                                    <span
+                                      className={cn(
+                                        "truncate transition-colors flex-1",
+                                        isActive
+                                          ? "text-black dark:text-white"
+                                          : "text-neutral-500 group-hover:text-neutral-800 dark:group-hover:text-neutral-200"
+                                      )}
+                                    >
+                                      {script.title || t.untitledScript}
+                                    </span>
+                                  </Link>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </>
+                    )}
                   </div>
                 </motion.div>
               )}

@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils"
 const morphTime = 1.5
 const cooldownTime = 0.5
 
-const useMorphingText = (texts: string[]) => {
+const useMorphingText = (texts: readonly string[]) => {
   const textIndexRef = useRef(0)
   const morphRef = useRef(0)
   const cooldownRef = useRef(0)
@@ -93,7 +93,7 @@ const useMorphingText = (texts: string[]) => {
 
 interface MorphingTextProps {
   className?: string
-  texts: string[]
+  texts: readonly string[]
 }
 
 const Texts: React.FC<Pick<MorphingTextProps, "texts">> = ({ texts }) => {

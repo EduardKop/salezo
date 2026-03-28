@@ -5,18 +5,18 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import {
-  ChevronDown,
+  CaretDown as ChevronDown,
   FileText,
-  FolderKanban,
+  Kanban as FolderKanban,
   Globe,
-  Languages,
-  Link2,
+  Translate as Languages,
+  Link as Link2,
   Moon,
-  ScrollText,
+  Scroll as ScrollText,
   ShieldCheck,
   Sun,
-  UsersRound,
-} from "lucide-react";
+  UsersThree as UsersRound,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import { useLanguage, type Language } from "@/hooks/useLanguage";

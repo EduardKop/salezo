@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, ChevronRight } from "lucide-react";
+import { ArrowRight, CaretRight as ChevronRight } from "@phosphor-icons/react";
 import { motion, type Variants } from "framer-motion";
 import { AuthForm } from "@/components/auth/AuthForm";
 import {

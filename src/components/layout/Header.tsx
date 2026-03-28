@@ -4,7 +4,18 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
-import { Moon, Sun, LogOut, Settings, HelpCircle, User as UserIcon, Globe, ChevronDown } from "lucide-react";
+import {
+  Moon,
+  Sun,
+  List,
+  SignOut as LogOut,
+  Gear as Settings,
+  Question as HelpCircle,
+  User as UserIcon,
+  Globe,
+  CaretDown as ChevronDown,
+  X,
+} from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase";
 import type { User } from "@supabase/supabase-js";
 import { cn } from "@/lib/utils";
@@ -20,7 +31,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export function Header() {
+type HeaderProps = {
+  onToggleSidebar?: () => void;
+  isMobileSidebarOpen?: boolean;
+};
+
+export function Header({ onToggleSidebar, isMobileSidebarOpen = false }: HeaderProps) {
   const router = useRouter();
   const { setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = React.useState(false);
@@ -94,9 +110,23 @@ export function Header() {
     >
       <div className="w-full px-4 h-12 flex items-center justify-between">
         {/* Logo */}
-        <Link href="/sales-agents" className="flex items-center gap-2 group">
-          <BrandLogo className="transition-transform group-hover:scale-[1.02]" />
-        </Link>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            aria-label={isMobileSidebarOpen ? "Close menu" : "Open menu"}
+            onClick={onToggleSidebar}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-black/10 bg-white/70 text-neutral-700 transition-colors hover:bg-neutral-100 dark:border-white/10 dark:bg-black/40 dark:text-neutral-300 dark:hover:bg-white/10 md:hidden"
+          >
+            {isMobileSidebarOpen ? (
+              <X className="h-4 w-4" />
+            ) : (
+              <List className="h-4 w-4" />
+            )}
+          </button>
+          <Link href="/sales-agents" className="flex items-center gap-2 group">
+            <BrandLogo className="transition-transform group-hover:scale-[1.02]" />
+          </Link>
+        </div>
 
         {/* Actions — client-only to avoid base-ui SSR/client ID mismatch */}
         <div className="flex items-center gap-2 md:gap-4">

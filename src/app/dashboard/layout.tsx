@@ -1,9 +1,32 @@
+"use client";
+
+import * as React from "react";
+import { usePathname } from "next/navigation";
 import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { DotPattern } from "@/components/ui/dot-pattern";
 import { cn } from "@/lib/utils";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const [mobileSidebarOpen, setMobileSidebarOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    setMobileSidebarOpen(false);
+  }, [pathname]);
+
+  React.useEffect(() => {
+    if (!mobileSidebarOpen) {
+      document.body.style.overflow = "";
+      return;
+    }
+
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileSidebarOpen]);
+
   return (
     <div className="flex flex-col min-h-screen relative z-0">
       <div className="pointer-events-none fixed inset-0 flex items-start justify-center z-[-2]">
@@ -21,9 +44,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         )} 
       />
       
-      <Header />
+      <Header
+        isMobileSidebarOpen={mobileSidebarOpen}
+        onToggleSidebar={() => setMobileSidebarOpen((prev) => !prev)}
+      />
       <div className="flex">
-        <Sidebar />
+        <Sidebar
+          mobileOpen={mobileSidebarOpen}
+          onNavigate={() => setMobileSidebarOpen(false)}
+        />
+        <button
+          type="button"
+          aria-label="Close sidebar"
+          onClick={() => setMobileSidebarOpen(false)}
+          className={cn(
+            "fixed inset-0 z-30 bg-black/50 transition-opacity duration-200 md:hidden",
+            mobileSidebarOpen
+              ? "pointer-events-auto opacity-100"
+              : "pointer-events-none opacity-0"
+          )}
+        />
         {/* pt-12 matches the h-12 of the fixed header, pl-[260px] pushes content right of sidebar */}
         <main className="flex-1 w-full pt-12 md:pl-[260px]">
           {children}

@@ -8,6 +8,7 @@ type FeatureParallaxLabels = {
   featureIntroTitlePrefix: string;
   featureIntroTitleHighlight: string;
   featureIntroDescription: string;
+  featureIntroMorphingTexts: readonly string[];
   featureVectorLabel: string;
   featureScriptLabel: string;
   featureAgentsLabel: string;
@@ -110,9 +111,11 @@ export function FeatureParallaxSection({
           >
             {labels.featureIntroTitlePrefix} {labels.featureIntroTitleHighlight}
           </h2>
-          <p className="mx-auto mt-7 max-w-4xl text-center text-base leading-8 text-black/62 dark:text-white/56 md:text-lg">
-            {labels.featureIntroDescription}
-          </p>
+          <div className="mx-auto mt-7 max-w-4xl">
+            <p className="text-base font-medium text-black/62 dark:text-white/56 md:text-lg lg:text-xl">
+              {labels.featureIntroDescription}
+            </p>
+          </div>
         </div>
 
         <div className="relative overflow-hidden rounded-[34px] border border-black/8 bg-white/[0.6] shadow-[0_36px_90px_-58px_rgba(0,0,0,0.35)] backdrop-blur-2xl dark:border-white/10 dark:bg-black/[0.42]">

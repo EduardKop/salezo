@@ -2,15 +2,15 @@
 
 import * as React from "react";
 import {
-  Bot,
+  Robot as Bot,
   Database,
-  MessagesSquare,
-  ScrollText,
-  Sparkles,
-  UserRound,
+  ChatTeardropText as MessagesSquare,
+  Scroll as ScrollText,
+  Sparkle as Sparkles,
+  User as UserRound,
   Wrench,
-  ChartColumnIncreasing,
-} from "lucide-react";
+  ChartBar as ChartColumnIncreasing,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { AnimatedBeam } from "@/components/ui/animated-beam";
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, CheckCircle2, FolderKanban, ShieldCheck } from "lucide-react";
+import { ArrowRight, CheckCircle as CheckCircle2, Kanban as FolderKanban, ShieldCheck } from "@phosphor-icons/react";
 import { motion, type Variants } from "framer-motion";
 import { useTheme } from "next-themes";
 import { AuthForm } from "@/components/auth/AuthForm";

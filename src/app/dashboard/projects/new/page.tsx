@@ -2,7 +2,16 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Check, ArrowRight, Loader2, Edit2, Plus, X, LayoutList, Wand2 } from "lucide-react";
+import {
+  Check,
+  ArrowRight,
+  CircleNotch as Loader2,
+  PencilSimple as Edit2,
+  Plus,
+  X,
+  ListBullets as LayoutList,
+  MagicWand as Wand2,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import { useLanguage } from "@/hooks/useLanguage";

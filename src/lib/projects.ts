@@ -39,6 +39,7 @@ export type Project = {
   plan?: string;
   details: ProjectDetail[];
   members?: ProjectMember[];
+  scripts_count?: number;
 };
 
 export function normalizeProfile(

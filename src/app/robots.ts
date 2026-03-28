@@ -9,6 +9,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/dashboard/", "/sales-agents/", "/api/"],
       },
     ],
-    sitemap: "https://salezo.io/sitemap.xml",
+    sitemap: `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://salezo.io"}/sitemap.xml`,
   };
 }

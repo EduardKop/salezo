@@ -2,7 +2,14 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Link2, ArrowRight, CheckCircle2, AlertCircle, Loader2, Workflow } from "lucide-react";
+import {
+  Link as Link2,
+  ArrowRight,
+  CheckCircle as CheckCircle2,
+  WarningCircle as AlertCircle,
+  CircleNotch as Loader2,
+  FlowArrow as Workflow,
+} from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/hooks/useLanguage";
 import { joinProjectAction } from "@/app/actions/projects";
@@ -59,10 +66,10 @@ export default function ConnectProjectPage() {
         initial={{ opacity: 0, y: 20, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.4, ease: [0.2, 0.65, 0.3, 0.9] }}
-        className="w-full max-w-md bg-white dark:bg-[#000000] border border-neutral-200 dark:border-neutral-800 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(255,255,255,0.02)] overflow-hidden"
+        className="w-full max-w-md bg-white dark:bg-[#111] border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-xs overflow-hidden"
       >
         <div className="p-8">
-          <div className="w-12 h-12 bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl flex items-center justify-center mb-6">
+          <div className="w-12 h-12 bg-neutral-100 dark:bg-[#1a1a1a] border border-transparent dark:border-neutral-800 rounded-xl flex items-center justify-center mb-6">
             <Workflow className="w-6 h-6 text-neutral-700 dark:text-neutral-300" />
           </div>
 
@@ -124,7 +131,7 @@ export default function ConnectProjectPage() {
               <button
                 type="submit"
                 disabled={!key.trim() || status === "loading" || status === "success"}
-                className="relative flex items-center justify-center gap-2 bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 disabled:opacity-50 disabled:cursor-not-allowed px-5 py-2 rounded-lg text-sm font-medium transition-all focus:outline-none active:scale-[0.98] min-w-[120px] overflow-hidden"
+                className="relative flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-neutral-950 disabled:opacity-50 disabled:cursor-not-allowed px-5 py-2 rounded-lg text-[13px] font-bold transition-all focus:outline-none active:scale-[0.98] min-w-[120px] overflow-hidden shadow-sm"
               >
                 <AnimatePresence mode="popLayout" initial={false}>
                   {status === "idle" && (
@@ -166,7 +173,7 @@ export default function ConnectProjectPage() {
                       initial={{ y: 20, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
                       exit={{ y: -20, opacity: 0 }}
-                      className="flex items-center gap-2 absolute text-emerald-500 dark:text-emerald-500"
+                      className="flex items-center gap-2 absolute"
                     >
                       <CheckCircle2 className="w-4 h-4" /> {t.success}
                     </motion.div>
@@ -179,7 +186,7 @@ export default function ConnectProjectPage() {
           </form>
         </div>
         
-        <div className="px-8 py-4 bg-neutral-50 dark:bg-neutral-900/50 border-t border-neutral-200 dark:border-neutral-800">
+        <div className="px-8 py-4 bg-neutral-50/50 dark:bg-[#161616] border-t border-neutral-200 dark:border-neutral-800">
            <p className="text-[12px] text-neutral-500">
              {t.footerWarning}
            </p>
