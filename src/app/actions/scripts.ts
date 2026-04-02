@@ -88,25 +88,32 @@ async function resolveScriptAccess(
   scriptId: string,
   userId: string
 ): Promise<ScriptAccess | null> {
-  // Fetch the script with its project (RLS allows: own scripts, project members, project owners, shared)
-  const { data: script } = await supabase
+
+  // 1. Try: user owns the script (SECURITY DEFINER — reliable through pooler)
+  const { data: ownRows } = await supabase.rpc("get_own_script", { p_script_id: scriptId });
+  if (ownRows?.[0]) {
+    const s = ownRows[0];
+    const script: Script = {
+      ...s,
+      projects: s.project_name ? { id: s.project_id, name: s.project_name } : null,
+    };
+    return { script, role: "owner", canEdit: true, canManage: true, isOwner: true };
+  }
+
+  // 2. Try: user is project member — normal RLS should work here
+  const { data: memberScript } = await supabase
     .from("scripts")
     .select("*, projects (id, name)")
     .eq("id", scriptId)
     .single();
 
-  if (script) {
-    // Owner check
-    if (script.owner_id === userId) {
-      return { script, role: "owner", canEdit: true, canManage: true, isOwner: true };
-    }
-
-    // Project member check
-    if (script.project_id) {
+  if (memberScript) {
+    if (memberScript.project_id) {
+      // Project member?
       const { data: membership } = await supabase
         .from("project_members")
         .select("role")
-        .eq("project_id", script.project_id)
+        .eq("project_id", memberScript.project_id)
         .eq("user_id", userId)
         .eq("status", "approved")
         .single();
@@ -115,40 +122,19 @@ async function resolveScriptAccess(
         const role = membership.role as ScriptAccessRole;
         const canEdit = ["owner", "admin", "sales_manager"].includes(role);
         const canManage = ["owner", "admin"].includes(role);
-        return { script, role, canEdit, canManage, isOwner: false };
-      }
-
-      // Project owner check (owns the project but not the script)
-      const { data: ownedProject } = await supabase
-        .from("projects")
-        .select("id")
-        .eq("id", script.project_id)
-        .eq("owner_id", userId)
-        .single();
-
-      if (ownedProject) {
-        return { script, role: "owner", canEdit: true, canManage: true, isOwner: false };
+        return { script: memberScript, role, canEdit, canManage, isOwner: false };
       }
     }
-
-    // Shared via link
-    return { script, role: "viewer", canEdit: false, canManage: false, isOwner: false };
+    // Visible but no membership — shared via link (viewer)
+    return { script: memberScript, role: "viewer", canEdit: false, canManage: false, isOwner: false };
   }
 
-  // Fallback: script not visible via normal RLS — try project owner SECURITY DEFINER
-  const { data: rows } = await supabase.rpc("get_script_as_project_owner", {
-    p_script_id: scriptId,
-  });
-
-  const ownerScript = rows?.[0];
-  if (ownerScript) {
-    return {
-      script: { ...ownerScript, projects: null } as Script,
-      role: "owner",
-      canEdit: true,
-      canManage: true,
-      isOwner: false,
-    };
+  // 3. Try: user owns the project (SECURITY DEFINER)
+  const { data: projRows } = await supabase.rpc("get_script_as_project_owner", { p_script_id: scriptId });
+  if (projRows?.[0]) {
+    const s = projRows[0];
+    const script: Script = { ...s, projects: null };
+    return { script, role: "owner", canEdit: true, canManage: true, isOwner: false };
   }
 
   return null;
@@ -163,25 +149,18 @@ export async function createScriptAction(
   description?: string
 ): Promise<string> {
   const supabase = await getServerSupabase();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) throw new Error("not_authenticated");
 
-  const { data, error } = await supabase
-    .from("scripts")
-    .insert({
-      owner_id: user.id,
-      sales_type: salesType,
-      ...(title ? { title } : {}),
-      ...(description ? { description } : {}),
-    })
-    .select("id")
-    .single();
+  // Use SECURITY DEFINER RPC — bypasses RLS INSERT check (auth.uid() unreliable via pooler)
+  const { data, error } = await supabase.rpc("create_script", {
+    p_sales_type:  salesType,
+    p_title:       title ?? null,
+    p_description: description ?? null,
+  });
 
-  if (error || !data) throw new Error(error?.message ?? "insert failed");
-  return data.id;
+  if (error) throw new Error(error.message);
+  return data as string;
 }
 
 export interface ScriptMember {
@@ -533,9 +512,11 @@ export async function saveDialogAction(
   if (!access) throw new Error("script_not_found");
   if (!access.canEdit) throw new Error("insufficient_permissions");
 
-  const { error } = await supabase
-    .from("script_dialogs")
-    .insert({ script_id: scriptId, turns });
+  // Use SECURITY DEFINER RPC — validates access and inserts (bypasses pooler RLS issue)
+  const { error } = await supabase.rpc("save_script_dialog", {
+    p_script_id: scriptId,
+    p_turns:     turns,
+  });
 
   if (error) throw new Error(error.message);
 }
@@ -1129,23 +1110,31 @@ export async function getScriptDialogsAction(
   const access = await resolveScriptAccess(supabase, scriptId, user.id);
   if (!access) throw new Error("script_not_found");
 
-  // Try normal read first; fall back to SECURITY DEFINER if project owner
+  // Script owner — use SECURITY DEFINER (reliable through pooler)
+  if (access.isOwner) {
+    const { data: ownData, error: ownError } = await supabase.rpc("get_own_script_dialogs", {
+      p_script_id: scriptId,
+    });
+    if (ownError) throw new Error(ownError.message);
+    return (ownData ?? []) as ScriptDialog[];
+  }
+
+  // Project owner of a team script — SECURITY DEFINER
+  const { data: projData, error: projError } = await supabase.rpc(
+    "get_script_dialogs_as_project_owner",
+    { p_script_id: scriptId }
+  );
+  if (!projError && projData !== null) return (projData ?? []) as ScriptDialog[];
+
+  // Project member — normal RLS read
   const { data, error } = await supabase
     .from("script_dialogs")
     .select("*")
     .eq("script_id", scriptId)
     .order("created_at", { ascending: true });
 
-  if (!error && data !== null) return (data ?? []) as ScriptDialog[];
-
-  // Fallback for project owner who can't read dialogs via normal RLS
-  const { data: rpcData, error: rpcError } = await supabase.rpc(
-    "get_script_dialogs_as_project_owner",
-    { p_script_id: scriptId }
-  );
-
-  if (rpcError) throw new Error(rpcError.message);
-  return (rpcData ?? []) as ScriptDialog[];
+  if (error) throw new Error(error.message);
+  return (data ?? []) as ScriptDialog[];
 }
 
 /**
