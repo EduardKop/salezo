@@ -37,6 +37,12 @@ import {
   updateMemberRoleAction,
   removeMemberAction,
 } from "@/app/actions/members";
+import {
+  getScriptConnectRequestsAction,
+  approveScriptConnectRequestAction,
+  rejectScriptConnectRequestAction,
+  type ScriptConnectRequest,
+} from "@/app/actions/scripts";
 
 import { projects as translations, common, t as getT, type Language } from "@/lib/i18n/translations";
 import { cn } from "@/lib/utils";
@@ -66,6 +72,9 @@ export default function ProjectsPage() {
   const [managingProjectId, setManagingProjectId] = React.useState<string | null>(null);
   const [reviewingProjectId, setReviewingProjectId] = React.useState<string | null>(null);
   const [copiedProjectId, setCopiedProjectId] = React.useState<string | null>(null);
+  const [scriptRequests, setScriptRequests] = React.useState<ScriptConnectRequest[]>([]);
+  const [processingScriptReqId, setProcessingScriptReqId] = React.useState<string | null>(null);
+  const [previewScriptReq, setPreviewScriptReq] = React.useState<ScriptConnectRequest | null>(null);
   const supabase = React.useMemo(() => createClient(), []);
   const { resolvedTheme } = useTheme();
 
@@ -153,6 +162,12 @@ export default function ProjectsPage() {
 
       setProjects(projectsData);
     }
+
+    // Load script connect requests for owned projects
+    getScriptConnectRequestsAction()
+      .then(setScriptRequests)
+      .catch(() => setScriptRequests([]));
+
     setIsLoading(false);
   }, [supabase]);
 
@@ -198,6 +213,34 @@ export default function ProjectsPage() {
 
   const getErrorMessage = (error: unknown, fallback: string) =>
     error instanceof Error && error.message ? error.message : fallback;
+
+  const handleApproveScriptRequest = React.useCallback(async (requestId: string) => {
+    setProcessingScriptReqId(requestId);
+    try {
+      await approveScriptConnectRequestAction(requestId);
+      setScriptRequests((prev) => prev.filter((r) => r.id !== requestId));
+      setPreviewScriptReq(null);
+      toast.success(language === "ru" ? "Скрипт подключён к проекту" : "Script connected to project");
+    } catch {
+      toast.error(language === "ru" ? "Не удалось одобрить" : "Failed to approve");
+    } finally {
+      setProcessingScriptReqId(null);
+    }
+  }, [language]);
+
+  const handleRejectScriptRequest = React.useCallback(async (requestId: string) => {
+    setProcessingScriptReqId(requestId);
+    try {
+      await rejectScriptConnectRequestAction(requestId);
+      setScriptRequests((prev) => prev.filter((r) => r.id !== requestId));
+      setPreviewScriptReq(null);
+      toast.success(language === "ru" ? "Запрос отклонён" : "Request rejected");
+    } catch {
+      toast.error(language === "ru" ? "Не удалось отклонить" : "Failed to reject");
+    } finally {
+      setProcessingScriptReqId(null);
+    }
+  }, [language]);
 
   const handleApprove = async (memberId: string) => {
     const role = (selectedRoles[memberId] || "sales_manager") as MemberRole;
@@ -363,6 +406,76 @@ export default function ProjectsPage() {
           </Link>
         </div>
       </div>
+
+      {/* ── Script connect requests for project owner ──────────────── */}
+      {scriptRequests.length > 0 && (
+        <div className="mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+              {language === "ru" ? "Запросы на подключение скриптов" : "Script connect requests"}
+            </h2>
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-white">
+              {scriptRequests.length}
+            </span>
+          </div>
+          <div className="flex flex-col gap-3">
+            {scriptRequests.map((req) => (
+              <div
+                key={req.id}
+                className="flex flex-col sm:flex-row sm:items-center gap-4 rounded-2xl border border-amber-200/80 bg-amber-50/60 dark:border-amber-500/20 dark:bg-amber-500/5 px-5 py-4"
+              >
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-sm font-bold shrink-0">
+                    {(req.requester_name || req.requester_email || "?").charAt(0).toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[13px] font-semibold text-neutral-900 dark:text-neutral-100 truncate">
+                      {req.requester_name || req.requester_email}
+                    </p>
+                    {req.requester_name && (
+                      <p className="text-[11px] text-neutral-500 truncate">{req.requester_email}</p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] text-neutral-700 dark:text-neutral-300 truncate">
+                    <span className="font-semibold text-neutral-900 dark:text-white">
+                      {req.script_title || (language === "ru" ? "Без названия" : "Untitled")}
+                    </span>
+                    {" → "}
+                    <span className="text-emerald-700 dark:text-emerald-400">{req.project_name}</span>
+                  </p>
+                  {req.script_description && (
+                    <p className="text-[11px] text-neutral-500 line-clamp-1 mt-0.5">{req.script_description}</p>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => setPreviewScriptReq(req)}
+                    className="text-[12px] font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white px-3 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                  >
+                    {language === "ru" ? "Просмотр" : "Preview"}
+                  </button>
+                  <button
+                    onClick={() => handleRejectScriptRequest(req.id)}
+                    disabled={processingScriptReqId === req.id}
+                    className="text-[12px] font-medium text-rose-600 dark:text-rose-400 px-3 py-1.5 rounded-lg border border-rose-200 dark:border-rose-500/20 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors disabled:opacity-50"
+                  >
+                    {language === "ru" ? "Отклонить" : "Reject"}
+                  </button>
+                  <button
+                    onClick={() => handleApproveScriptRequest(req.id)}
+                    disabled={processingScriptReqId === req.id}
+                    className="text-[12px] font-semibold text-white bg-emerald-600 hover:bg-emerald-700 px-4 py-1.5 rounded-lg transition-colors disabled:opacity-50 shadow-sm"
+                  >
+                    {language === "ru" ? "Принять" : "Approve"}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <motion.div 
         className="flex flex-col gap-6"
@@ -919,6 +1032,85 @@ export default function ProjectsPage() {
       </AnimatePresence>
 
     </div>
+
+    {/* ── Script connect request preview modal ──────────────────── */}
+    <AnimatePresence>
+      {previewScriptReq && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setPreviewScriptReq(null)}
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96, y: 12 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 12 }}
+            className="relative w-full max-w-md overflow-hidden rounded-2xl border border-neutral-200/80 bg-white/95 shadow-2xl backdrop-blur-xl dark:border-white/15 dark:bg-[#111]"
+          >
+            <div className="flex items-center justify-between border-b border-neutral-100 dark:border-white/10 px-5 py-4">
+              <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">
+                {language === "ru" ? "Запрос на подключение скрипта" : "Script connect request"}
+              </h3>
+              <button onClick={() => setPreviewScriptReq(null)} className="rounded-md p-1.5 text-neutral-400 hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="p-5 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                  {(previewScriptReq.requester_name || previewScriptReq.requester_email || "?").charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <p className="text-[14px] font-semibold text-neutral-900 dark:text-white">
+                    {previewScriptReq.requester_name || previewScriptReq.requester_email}
+                  </p>
+                  {previewScriptReq.requester_name && (
+                    <p className="text-[12px] text-neutral-500">{previewScriptReq.requester_email}</p>
+                  )}
+                </div>
+              </div>
+              <div className="rounded-xl border border-neutral-100 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50 p-4 space-y-3">
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-neutral-500 mb-1">{language === "ru" ? "Скрипт" : "Script"}</p>
+                  <p className="text-[15px] font-bold text-neutral-900 dark:text-white">
+                    {previewScriptReq.script_title || (language === "ru" ? "Без названия" : "Untitled")}
+                  </p>
+                </div>
+                {previewScriptReq.script_description && (
+                  <div>
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-neutral-500 mb-1">{language === "ru" ? "Описание" : "Description"}</p>
+                    <p className="text-[13px] text-neutral-600 dark:text-neutral-400 leading-relaxed">{previewScriptReq.script_description}</p>
+                  </div>
+                )}
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-neutral-500 mb-1">{language === "ru" ? "Проект" : "Project"}</p>
+                  <p className="text-[13px] font-semibold text-emerald-700 dark:text-emerald-400">{previewScriptReq.project_name}</p>
+                </div>
+              </div>
+              <div className="flex gap-3 pt-1">
+                <button
+                  onClick={() => handleRejectScriptRequest(previewScriptReq.id)}
+                  disabled={!!processingScriptReqId}
+                  className="flex-1 rounded-xl border border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/5 text-rose-700 dark:text-rose-400 text-[13px] font-semibold py-2.5 hover:bg-rose-100 dark:hover:bg-rose-500/10 transition-colors disabled:opacity-50"
+                >
+                  {language === "ru" ? "Отклонить" : "Reject"}
+                </button>
+                <button
+                  onClick={() => handleApproveScriptRequest(previewScriptReq.id)}
+                  disabled={!!processingScriptReqId}
+                  className="flex-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[13px] font-bold py-2.5 transition-colors disabled:opacity-50 shadow-lg shadow-emerald-500/20"
+                >
+                  {language === "ru" ? "Принять" : "Approve"}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
     </>
   );
 }

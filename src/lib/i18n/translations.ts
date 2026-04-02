@@ -194,10 +194,15 @@ export const scriptsDashboard = {
     connectModalDesc:
       "Projects you own or manage are available here. Connected scripts become available to project members.",
     noProjects: "No managed projects yet.",
-    connectedOk: "Connected.",
+     connectedOk: "Connected.",
+    requestSentOk: "Request sent to project owner.",
     connectError: "Failed to connect script.",
     disconnectError: "Failed to disconnect script.",
     disconnectedOk: "Disconnected from project.",
+    requestLabel: "Send request",
+    memberRoleLabel: "Member",
+    ownerRoleLabel: "You own this",
+    adminRoleLabel: "Admin",
 
     shareButton: "Share",
     manageShareButton: "Manage share",
@@ -273,10 +278,15 @@ export const scriptsDashboard = {
     connectModalDesc:
       "Здесь отображаются проекты, которыми вы владеете или управляете. Подключённые скрипты доступны участникам проекта.",
     noProjects: "У вас пока нет управляемых проектов.",
-    connectedOk: "Подключено.",
+     connectedOk: "Подключено.",
+    requestSentOk: "Запрос отправлен владельцу проекта.",
     connectError: "Не удалось подключить скрипт.",
     disconnectError: "Не удалось отключить скрипт.",
     disconnectedOk: "Скрипт отключён от проекта.",
+    requestLabel: "Отправить запрос",
+    memberRoleLabel: "Участник",
+    ownerRoleLabel: "Ваш проект",
+    adminRoleLabel: "Администратор",
 
     shareButton: "Поделиться",
     manageShareButton: "Управление доступом",

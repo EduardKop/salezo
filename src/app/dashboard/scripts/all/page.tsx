@@ -21,9 +21,11 @@ import { PageLoader } from "@/components/ui/page-loader";
 import {
   getMyScriptsAction,
   getSharedScriptsAction,
+  getProjectConnectedScriptsAction,
   getManagedProjectsAction,
   connectScriptToProjectAction,
   disconnectScriptFromProjectAction,
+  disconnectTeamScriptAction,
   type Script,
 } from "@/app/actions/scripts";
 import { cn } from "@/lib/utils";
@@ -259,16 +261,20 @@ export default function AllScriptsPage() {
 
   const [scripts, setScripts] = React.useState<(Script & { dialog_count: number })[]>([]);
   const [sharedScripts, setSharedScripts] = React.useState<(Script & { dialog_count: number; member_role: string })[]>([]);
+  const [projectScripts, setProjectScripts] = React.useState<(Script & { dialog_count: number; share_count: number; member_name: string | null; member_email: string | null })[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [connectingScript, setConnectingScript] = React.useState<Script | null>(null);
+  const [disconnectingTeamId, setDisconnectingTeamId] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     Promise.all([
       getMyScriptsAction().catch(() => []),
       getSharedScriptsAction().catch(() => []),
-    ]).then(([own, shared]) => {
+      getProjectConnectedScriptsAction().catch(() => []),
+    ]).then(([own, shared, projScripts]) => {
       setScripts(own);
       setSharedScripts(shared);
+      setProjectScripts(projScripts);
     }).finally(() => setIsLoading(false));
   }, []);
 
@@ -278,11 +284,23 @@ export default function AllScriptsPage() {
     );
   };
 
+  const handleDisconnectTeam = async (scriptId: string) => {
+    setDisconnectingTeamId(scriptId);
+    try {
+      await disconnectTeamScriptAction(scriptId);
+      setProjectScripts((prev) => prev.filter((s) => s.id !== scriptId));
+    } catch {
+      // silent
+    } finally {
+      setDisconnectingTeamId(null);
+    }
+  };
+
   if (!mounted || isLoading) {
     return <PageLoader className="min-h-[calc(100vh-5rem)]" />;
   }
 
-  if (scripts.length === 0 && sharedScripts.length === 0) {
+  if (scripts.length === 0 && sharedScripts.length === 0 && projectScripts.length === 0) {
     return (
       <div className="w-full max-w-2xl mx-auto flex flex-col pt-20 lg:pt-32 items-center justify-center min-h-[60vh]">
         <div className="flex flex-col items-center text-center p-8 bg-white dark:bg-[#111] border border-neutral-200 dark:border-neutral-800 rounded-2xl w-full">
@@ -562,6 +580,84 @@ export default function AllScriptsPage() {
                       </div>
                     </div>
                   </div>
+                </motion.div>
+              ))}
+            </motion.div>
+          </div>
+        )}
+
+        {/* ── Team scripts connected to my projects ─────────────── */}
+        {projectScripts.length > 0 && (
+          <div className="mt-14">
+            <div className="mb-6">
+              <h2 className="text-2xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-100 mb-1">
+                {language === "ru" ? "Скрипты участников проекта" : "Team scripts in your projects"}
+              </h2>
+              <p className="text-sm text-neutral-500">
+                {language === "ru"
+                  ? "Скрипты добавленные участниками ваших проектов"
+                  : "Scripts added by members of your projects"}
+              </p>
+            </div>
+            <motion.div
+              className="flex flex-col gap-6"
+              initial="hidden"
+              animate="visible"
+              variants={{ visible: { transition: { staggerChildren: 0.05 } } }}
+            >
+              {projectScripts.map((script) => (
+                <motion.div
+                  key={script.id}
+                  className="flex flex-col overflow-hidden rounded-xl border border-violet-100 bg-white shadow-sm dark:border-violet-500/15 dark:bg-[#111] transition-all"
+                  variants={{ hidden: { opacity: 0, y: 5 }, visible: { opacity: 1, y: 0, transition: { duration: 0.2 } } }}
+                >
+                  <div className="flex items-center justify-between border-b border-violet-50 bg-violet-50/30 p-5 px-6 dark:border-violet-900/30 dark:bg-violet-950/20">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-400 to-purple-500 flex items-center justify-center text-white text-[11px] font-bold shrink-0">
+                        {(script.member_name || script.member_email || "?").charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">
+                          {script.title || (language === "ru" ? "Скрипт без названия" : "Untitled script")}
+                        </h3>
+                        <div className="flex items-center gap-3 mt-0.5">
+                          <span className="text-[12px] text-neutral-500">
+                            {script.dialog_count} {language === "ru" ? "диалогов" : "dialogs"}
+                          </span>
+                          {(script as any).projects?.name && (
+                            <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
+                              {(script as any).projects.name}
+                            </span>
+                          )}
+                          <span className="text-[11px] text-violet-600 dark:text-violet-400 font-medium">
+                            {script.member_name || script.member_email}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Link
+                        href={`/sales-agents/scripts/${script.id}/chat`}
+                        className="flex items-center gap-1.5 rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-neutral-600 transition-all hover:border-violet-500 hover:bg-violet-50 hover:text-violet-700 dark:border-neutral-700 dark:bg-[#0a0a0a] dark:hover:border-violet-800 dark:hover:text-violet-400"
+                      >
+                        {language === "ru" ? "Открыть" : "Open"} →
+                      </Link>
+                      <button
+                        onClick={() => handleDisconnectTeam(script.id)}
+                        disabled={disconnectingTeamId === script.id}
+                        className="flex items-center gap-1 rounded-lg border border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/5 hover:bg-rose-100 px-3 py-1.5 text-[11px] font-bold text-rose-600 dark:text-rose-400 transition-all disabled:opacity-50"
+                      >
+                        {language === "ru" ? "Отключить" : "Disconnect"}
+                      </button>
+                    </div>
+                  </div>
+                  {script.description && (
+                    <div className="p-6">
+                      <p className="text-[13px] leading-relaxed text-neutral-700 dark:text-neutral-300">
+                        {script.description}
+                      </p>
+                    </div>
+                  )}
                 </motion.div>
               ))}
             </motion.div>

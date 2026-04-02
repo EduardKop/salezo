@@ -462,11 +462,11 @@ export default function ProjectPage() {
   };
 
   return (
-    <div className="flex-1 w-full flex flex-col relative min-h-screen pb-20">
-      <div className="w-full flex-1 flex flex-col p-6 md:p-8 lg:p-12 relative z-10">
+    <div className="relative flex min-h-screen w-full flex-1 flex-col pb-14 md:pb-16">
+      <div className="relative z-10 mx-auto flex w-full max-w-[1160px] flex-1 flex-col px-4 py-5 sm:px-6 md:px-8 md:py-6 lg:px-8 lg:py-8">
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-8 pb-6 border-b border-neutral-200 dark:border-neutral-800">
+        <div className="mb-6 flex items-center justify-between border-b border-neutral-200 pb-4 dark:border-neutral-800 md:mb-7 md:pb-5">
           <div className="flex items-center gap-4">
             <Link href="/sales-agents/projects" className="p-2 -ml-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-500 hover:text-black dark:hover:text-white transition-colors" title={t.back}>
               <ArrowLeft className="w-5 h-5" />
@@ -488,13 +488,13 @@ export default function ProjectPage() {
         </div>
 
         {/* Content grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(320px,30rem)] lg:gap-5">
           {/* ── Module button area ── */}
-          <div className="lg:col-span-2 space-y-3">
+          <div className="space-y-3">
             {/* Scripts module */}
             <Link
               href={`/sales-agents/projects/${project.id}/scripts`}
-              className="group flex items-center justify-between w-full bg-white dark:bg-[#111] border border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700 rounded-xl px-5 py-4 transition-colors"
+              className="group flex w-full items-center justify-between rounded-xl border border-neutral-200 bg-white px-4 py-3.5 transition-colors hover:border-neutral-300 dark:border-neutral-800 dark:bg-[#111] dark:hover:border-neutral-700"
             >
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-[#1a1a1a] border border-transparent dark:border-neutral-800 flex items-center justify-center transition-colors group-hover:dark:border-neutral-700">
@@ -518,8 +518,8 @@ export default function ProjectPage() {
             </Link>
           </div>
 
-          <div className="bg-white dark:bg-[#111] border border-neutral-200 dark:border-neutral-800 rounded-xl p-6 h-fit">
-            <h3 className="text-[14px] font-semibold text-neutral-900 dark:text-neutral-100 mb-4 pb-4 border-b border-neutral-200 dark:border-neutral-800 uppercase tracking-widest">
+          <div className="h-fit rounded-xl border border-neutral-200 bg-white p-5 dark:border-neutral-800 dark:bg-[#111]">
+            <h3 className="mb-4 border-b border-neutral-200 pb-4 text-[14px] font-semibold uppercase tracking-widest text-neutral-900 dark:border-neutral-800 dark:text-neutral-100">
               {t.details}
             </h3>
             <div className="space-y-4">

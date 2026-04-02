@@ -113,6 +113,12 @@
 }
 
 @layer base {
+  html {
+    min-height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
   *,
   ::after,
   ::before,
@@ -125,6 +131,8 @@
   }
   body {
     @apply bg-background text-foreground;
+    min-height: 100%;
+    overflow-x: hidden;
   }
 }
 

@@ -4,170 +4,282 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Plus,
-  Robot as Bot,
-  Scroll as ScrollText,
-  FileText,
-  CaretDown as ChevronDown,
-  SquaresFour,
+  ChatTeardropDots,
+  Link as LinkIcon,
   ListDashes,
+  Plus,
+  Scroll as ScrollText,
+  SquaresFour,
+  X,
 } from "@phosphor-icons/react";
-import { AnimatePresence, motion } from "framer-motion";
-import { createClient } from "@/lib/supabase";
 import { getAccessibleScriptsAction } from "@/app/actions/scripts";
-import { cn } from "@/lib/utils";
 import { useLanguage } from "@/hooks/useLanguage";
+import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase";
+
+const DESKTOP_SIDEBAR_WIDTH = 288;
 
 const translations = {
   en: {
-    dashboard: "Sales Agents",
-    projectsTitle: "Projects",
+    salesAgents: "Sales Agents",
+    scripts: "Scripts",
+    chat: "AI Chat",
+    workspace: "Workspace",
+    projects: "Projects",
     allScripts: "All Scripts",
+    newChat: "New Chat",
+    recentProjects: "Recent Projects",
+    recentScripts: "Recent Scripts",
     newProject: "New Project",
     connectProject: "Connect Project",
-    scriptsTitle: "Scripts",
-    scriptsWorkspace: "Scripts Workspace",
     newScript: "Add Script",
-    connectScript: "Connect Script",
-    comingSoon: "Soon",
-    showAllProjects: "All projects",
-    showAllScripts: "All scripts",
-    loading: "Loading...",
-    scripts: "Scripts",
-    notAdded: "Not added",
+    noProjects: "No projects yet",
+    noScripts: "No scripts yet",
     untitledScript: "Untitled script",
+    closeMenu: "Hide menu",
   },
   ru: {
-    dashboard: "Sales Agents",
-    projectsTitle: "Проекты",
-    allScripts: "Все Скрипты",
-    newProject: "Новый Проект",
-    connectProject: "Подключить Проект",
-    scriptsTitle: "Скрипты",
-    scriptsWorkspace: "Рабочее пространство скриптов",
-    newScript: "Добавить Скрипт",
-    connectScript: "Подключить Скрипт",
-    comingSoon: "Скоро",
-    showAllProjects: "Все проекты",
-    showAllScripts: "Все скрипты",
-    loading: "Загрузка...",
+    salesAgents: "Sales Agents",
     scripts: "Скрипты",
-    notAdded: "Не добавлено",
+    chat: "AI Чат",
+    workspace: "Рабочее пространство",
+    projects: "Проекты",
+    allScripts: "Все скрипты",
+    newChat: "Новый чат",
+    recentProjects: "Последние проекты",
+    recentScripts: "Последние скрипты",
+    newProject: "Новый проект",
+    connectProject: "Подключить проект",
+    newScript: "Добавить скрипт",
+    noProjects: "Проектов пока нет",
+    noScripts: "Скриптов пока нет",
     untitledScript: "Скрипт без названия",
-  }
-};
+    closeMenu: "Скрыть меню",
+  },
+} as const;
 
-type Project = {
-  id: string;
-  name: string;
-};
-
-type Script = {
-  id: string;
-  title: string | null;
-};
+type Project = { id: string; name: string };
+type Script = { id: string; title: string | null };
+type NavSectionId = "salesAgents" | "scripts" | "chat";
 
 type SidebarProps = {
   mobileOpen?: boolean;
   onNavigate?: () => void;
 };
 
+const SECTION_THEME = {
+  salesAgents: {
+    accent: "text-sky-500 dark:text-sky-400",
+    activeBg: "bg-sky-500/[0.10] dark:bg-sky-400/[0.12]",
+    activeText: "text-sky-700 dark:text-sky-300",
+  },
+  scripts: {
+    accent: "text-emerald-500 dark:text-emerald-400",
+    activeBg: "bg-emerald-500/[0.10] dark:bg-emerald-400/[0.12]",
+    activeText: "text-emerald-700 dark:text-emerald-300",
+  },
+  chat: {
+    accent: "text-violet-500 dark:text-violet-400",
+    activeBg: "bg-violet-500/[0.10] dark:bg-violet-400/[0.12]",
+    activeText: "text-violet-700 dark:text-violet-300",
+  },
+} as const;
+
+function SectionHeading({ label }: { label: string }) {
+  return (
+    <p className="px-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-neutral-500 dark:text-neutral-500">
+      {label}
+    </p>
+  );
+}
+
+function Divider() {
+  return <div className="mx-3 h-px bg-black/7 dark:bg-white/7" />;
+}
+
+function RecentListSkeleton() {
+  return (
+    <div className="space-y-2 pl-10 pt-1">
+      {(["72%", "60%", "78%"] as const).map((width, index) => (
+        <div
+          key={index}
+          className="h-3 rounded-full bg-black/[0.06] dark:bg-white/[0.06]"
+          style={{ width }}
+        />
+      ))}
+    </div>
+  );
+}
+
+type SidebarRowProps = {
+  href: string;
+  icon: React.ElementType;
+  label: string;
+  active?: boolean;
+  section: NavSectionId;
+  onClick?: () => void;
+};
+
+function SidebarRow({
+  href,
+  icon: Icon,
+  label,
+  active = false,
+  section,
+  onClick,
+}: SidebarRowProps) {
+  const theme = SECTION_THEME[section];
+
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      className={cn(
+        "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors duration-150",
+        active
+          ? cn(theme.activeBg, "font-medium", theme.activeText)
+          : "text-neutral-700 hover:bg-black/[0.03] hover:text-neutral-950 dark:text-neutral-300 dark:hover:bg-white/[0.04] dark:hover:text-white"
+      )}
+    >
+      <Icon
+        className={cn(
+          "h-[16px] w-[16px] shrink-0",
+          active ? theme.accent : "text-neutral-500 group-hover:text-neutral-900 dark:text-neutral-400 dark:group-hover:text-white"
+        )}
+        weight={active ? "fill" : "regular"}
+      />
+      <span className="min-w-0 truncate">{label}</span>
+    </Link>
+  );
+}
+
+type RecentLinkProps = {
+  href: string;
+  label: string;
+  active?: boolean;
+  section: NavSectionId;
+  onClick?: () => void;
+};
+
+function RecentLink({
+  href,
+  label,
+  active = false,
+  section,
+  onClick,
+}: RecentLinkProps) {
+  const theme = SECTION_THEME[section];
+
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      className={cn(
+        "block rounded-lg px-3 py-1.5 pl-10 text-sm transition-colors duration-150",
+        active
+          ? cn("font-medium", theme.activeText)
+          : "text-neutral-700 hover:bg-black/[0.03] hover:text-neutral-950 dark:text-neutral-300 dark:hover:bg-white/[0.04] dark:hover:text-white"
+      )}
+    >
+      <span className="block truncate">{label}</span>
+    </Link>
+  );
+}
+
 export function Sidebar({ mobileOpen = false, onNavigate }: SidebarProps) {
   const { language, mounted } = useLanguage();
-  const t = mounted ? translations[language as keyof typeof translations] : translations.ru;
+  const t = mounted
+    ? translations[language as keyof typeof translations]
+    : translations.ru;
 
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "";
   const [projects, setProjects] = React.useState<Project[]>([]);
   const [scripts, setScripts] = React.useState<Script[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const [projectsOpen, setProjectsOpen] = React.useState(false);
-  const [scriptsOpen, setScriptsOpen] = React.useState(false);
-  const [menuStateReady, setMenuStateReady] = React.useState(false);
-  const [allowMenuAnimation, setAllowMenuAnimation] = React.useState(false);
-  const isProjectsNodeActive =
-    pathname === "/sales-agents/projects" || pathname === "/dashboard/projects";
-  const isSalesAgentsBranchActive =
-    pathname === "/sales-agents" ||
-    pathname === "/dashboard";
-  const isScriptsBranchActive =
-    pathname === "/sales-agents/scripts" || pathname === "/dashboard/scripts";
-  const isAllScriptsNodeActive =
-    pathname === "/sales-agents/scripts/all" ||
-    pathname === "/dashboard/scripts/all";
+  const [loadingProjects, setLoadingProjects] = React.useState(true);
+  const [loadingScripts, setLoadingScripts] = React.useState(true);
 
   React.useEffect(() => {
     try {
-      const savedProjectsOpen = localStorage.getItem("sidebar:projects-open");
-      const savedScriptsOpen = localStorage.getItem("sidebar:scripts-open");
+      localStorage.setItem("salezo:sidebar-width", String(DESKTOP_SIDEBAR_WIDTH));
+    } catch {}
 
-      if (savedProjectsOpen !== null) {
-        setProjectsOpen(savedProjectsOpen === "true");
-      }
-      if (savedScriptsOpen !== null) {
-        setScriptsOpen(savedScriptsOpen === "true");
-      }
-    } catch {
-      // ignore localStorage errors to keep sidebar functional
-    } finally {
-      setMenuStateReady(true);
-    }
+    document.documentElement.style.setProperty(
+      "--dashboard-sidebar-width",
+      `${DESKTOP_SIDEBAR_WIDTH}px`
+    );
+
+    window.dispatchEvent(
+      new CustomEvent("salezo-sidebar-width", {
+        detail: { width: DESKTOP_SIDEBAR_WIDTH },
+      })
+    );
   }, []);
 
-  React.useEffect(() => {
-    if (!menuStateReady) {
-      return;
-    }
-    const frameId = requestAnimationFrame(() => {
-      setAllowMenuAnimation(true);
-    });
-    return () => cancelAnimationFrame(frameId);
-  }, [menuStateReady]);
+  const isWorkspaceActive = pathname === "/sales-agents" || pathname === "/dashboard";
+  const isProjectsOverviewActive =
+    pathname === "/sales-agents/projects" || pathname === "/dashboard/projects";
+  const isNewProjectActive =
+    pathname === "/sales-agents/projects/new" || pathname === "/dashboard/projects/new";
+  const isConnectProjectActive =
+    pathname === "/sales-agents/projects/connect" || pathname === "/dashboard/projects/connect";
 
-  React.useEffect(() => {
-    if (!menuStateReady) {
-      return;
-    }
-    try {
-      localStorage.setItem("sidebar:projects-open", String(projectsOpen));
-    } catch {
-      // ignore localStorage errors to keep sidebar functional
-    }
-  }, [projectsOpen, menuStateReady]);
+  const isScriptsWorkspaceActive =
+    pathname === "/sales-agents/scripts" || pathname === "/dashboard/scripts";
+  const isAllScriptsActive =
+    pathname === "/sales-agents/scripts/all" || pathname === "/dashboard/scripts/all";
+  const isNewScriptActive =
+    pathname === "/sales-agents/scripts/new" || pathname === "/dashboard/scripts/new";
 
-  React.useEffect(() => {
-    if (!menuStateReady) {
-      return;
-    }
-    try {
-      localStorage.setItem("sidebar:scripts-open", String(scriptsOpen));
-    } catch {
-      // ignore localStorage errors to keep sidebar functional
-    }
-  }, [scriptsOpen, menuStateReady]);
+  const isChatActive = pathname === "/sales-agents/chat" || pathname === "/dashboard/chat";
+
+  const selectedProjectId = React.useMemo(() => {
+    const match = pathname.match(/\/projects\/([^/]+)/);
+    const value = match?.[1];
+    return !value || ["new", "connect"].includes(value) ? null : value;
+  }, [pathname]);
+
+  const selectedScriptId = React.useMemo(() => {
+    const match = pathname.match(/\/scripts\/([^/]+)/);
+    const value = match?.[1];
+    return !value || ["new", "all", "connect"].includes(value) ? null : value;
+  }, [pathname]);
+
+  const visibleProjects = React.useMemo(() => projects.slice(0, 6), [projects]);
+  const visibleScripts = React.useMemo(() => scripts.slice(0, 6), [scripts]);
 
   React.useEffect(() => {
     let isMounted = true;
     const supabase = createClient();
 
-    async function loadData() {
-      const [{ data: projectsData, error: pErr }, scriptsData] = await Promise.all([
-        supabase.from('projects').select('id, name').order('created_at', { ascending: false }),
-        getAccessibleScriptsAction(),
-      ]);
-        
-      if (isMounted) {
-        if (!pErr && projectsData) setProjects(projectsData);
-        setScripts(scriptsData);
-        setLoading(false);
-      }
-    }
-    
-    loadData();
+    async function loadProjects() {
+      const { data, error } = await supabase
+        .from("projects")
+        .select("id, name")
+        .order("created_at", { ascending: false });
 
-    const channel = supabase.channel('sidebar-data')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, loadData)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'project_members' }, loadData)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'scripts' }, loadData)
+      if (!isMounted) return;
+
+      if (!error && data) {
+        setProjects(data);
+      }
+      setLoadingProjects(false);
+    }
+
+    async function loadScripts() {
+      const data = await getAccessibleScriptsAction().catch(() => []);
+      if (!isMounted) return;
+      setScripts(data);
+      setLoadingScripts(false);
+    }
+
+    loadProjects();
+    loadScripts();
+
+    const channel = supabase
+      .channel("sidebar-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "projects" }, loadProjects)
+      .on("postgres_changes", { event: "*", schema: "public", table: "project_members" }, loadProjects)
+      .on("postgres_changes", { event: "*", schema: "public", table: "scripts" }, loadScripts)
       .subscribe();
 
     return () => {
@@ -179,279 +291,157 @@ export function Sidebar({ mobileOpen = false, onNavigate }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "fixed left-0 top-12 w-[260px] h-[calc(100vh-3rem)] border-r border-neutral-200/50 dark:border-white/[0.05] bg-neutral-50/60 dark:bg-[#050505]/60 backdrop-blur-2xl z-40 overflow-y-auto custom-scrollbar shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)] transition-transform duration-300 ease-out md:z-0",
-        mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+        "fixed left-2 top-12 z-40 h-[calc(100vh-3.5rem)] w-[calc(100vw-1rem)] max-w-[280px] transition-transform duration-300 ease-out md:left-2 md:top-12 md:h-[calc(100vh-3.5rem)] md:w-[272px] md:max-w-none",
+        mobileOpen ? "translate-x-0" : "-translate-x-[104%] md:translate-x-0"
       )}
     >
-      <div className="absolute inset-0 bg-gradient-to-b from-white/30 to-transparent dark:from-white/[0.02] dark:to-transparent pointer-events-none" />
-      <div className="flex flex-col gap-4 py-8 px-5 w-full h-full relative z-10">
-        
-        {/* Sales Agents Branch */}
-        <div className="space-y-2">
-          <Link
-            href="/sales-agents"
-            onClick={onNavigate}
-            className="relative z-10 flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-colors group"
-          >
-            {isSalesAgentsBranchActive && (
-              <motion.div
-                layoutId="sidebar-active"
-                className="absolute inset-0 bg-neutral-100 dark:bg-neutral-800/50 rounded-lg -z-10"
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              />
-            )}
-            <Bot className={cn(
-              "w-4 h-4 transition-colors",
-              isSalesAgentsBranchActive ? "text-black dark:text-white" : "text-neutral-400 group-hover:text-black dark:group-hover:text-white"
-            )} />
-            <span className={cn(
-              "transition-colors",
-              isSalesAgentsBranchActive ? "text-black dark:text-white" : "text-neutral-500 group-hover:text-black dark:group-hover:text-white"
-            )}>{t.dashboard}</span>
-            <div
-              className={cn(
-                "absolute left-0 top-[20%] bottom-[20%] w-[3px] rounded-r-md transition-colors",
-                isSalesAgentsBranchActive
-                  ? "bg-[#8fc2ff]"
-                  : "bg-[#8fc2ff]/40"
-              )}
-            />
-          </Link>
+      <div className="flex h-full flex-col overflow-hidden rounded-[28px] border border-black/8 bg-white/88 shadow-[0_24px_48px_-36px_rgba(0,0,0,0.22)] backdrop-blur-xl dark:border-white/8 dark:bg-[#0b0b0d]/90 dark:shadow-[0_28px_56px_-42px_rgba(0,0,0,0.8)]">
+        <button
+          type="button"
+          onClick={onNavigate}
+          className="absolute right-4 top-4 inline-flex h-8 w-8 items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-black/[0.05] hover:text-neutral-950 dark:text-neutral-400 dark:hover:bg-white/[0.05] dark:hover:text-white md:hidden"
+          aria-label={t.closeMenu}
+        >
+          <X className="h-4 w-4" />
+        </button>
 
-          <div className="space-y-1 ml-4 pl-3">
-            <button
-              type="button"
-              onClick={() => setProjectsOpen((prev) => !prev)}
-              className={cn(
-                "inline-flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-[13px] font-medium transition-colors",
-                isProjectsNodeActive
-                  ? "bg-neutral-100 dark:bg-neutral-800/40 text-black dark:text-white"
-                  : "text-neutral-500 hover:text-black dark:hover:text-white hover:bg-neutral-100/60 dark:hover:bg-neutral-800/30"
-              )}
-            >
-              <FileText className="h-3.5 w-3.5 shrink-0 opacity-80" />
-              <span className="flex-1 text-left">{t.projectsTitle}</span>
-              <motion.span
-                initial={false}
-                animate={{ rotate: menuStateReady && projectsOpen ? 0 : -90 }}
-                transition={{ duration: allowMenuAnimation ? 0.2 : 0, ease: "easeOut" }}
-                className={cn(
-                  "inline-flex items-center justify-center transition-opacity",
-                  menuStateReady ? "opacity-70" : "opacity-0"
-                )}
-              >
-                <ChevronDown className="h-3.5 w-3.5" />
-              </motion.span>
-            </button>
+        <nav className="min-h-0 flex-1 overflow-y-auto px-3 py-5">
+          <div className="space-y-5">
+            <section className="space-y-2">
+              <SectionHeading label={t.salesAgents} />
+              <div className="space-y-0.5">
+                <SidebarRow
+                  href="/sales-agents"
+                  icon={SquaresFour}
+                  label={t.workspace}
+                  active={isWorkspaceActive}
+                  section="salesAgents"
+                  onClick={onNavigate}
+                />
+                <SidebarRow
+                  href="/sales-agents/projects"
+                  icon={ListDashes}
+                  label={t.projects}
+                  active={isProjectsOverviewActive || selectedProjectId !== null}
+                  section="salesAgents"
+                  onClick={onNavigate}
+                />
+                <SidebarRow
+                  href="/sales-agents/projects/new"
+                  icon={Plus}
+                  label={t.newProject}
+                  active={isNewProjectActive}
+                  section="salesAgents"
+                  onClick={onNavigate}
+                />
+                <SidebarRow
+                  href="/sales-agents/projects/connect"
+                  icon={LinkIcon}
+                  label={t.connectProject}
+                  active={isConnectProjectActive}
+                  section="salesAgents"
+                  onClick={onNavigate}
+                />
+              </div>
 
-            <AnimatePresence initial={false}>
-              {projectsOpen && (
-                <motion.div
-                  key="projects-dropdown"
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: allowMenuAnimation ? 0.22 : 0, ease: "easeOut" }}
-                  className="overflow-hidden"
-                >
-                  <div className="ml-3 space-y-0.5 pt-0.5">
-                    {loading ? (
-                      <div className="py-2.5 text-sm text-neutral-400 flex items-center gap-3">
-                        <div className="w-1.5 h-1.5 rounded-full bg-neutral-300 dark:bg-neutral-700 animate-pulse" />
-                        {t.loading}
-                      </div>
-                    ) : (
-                      <>
-                        <Link
-                          href="/sales-agents/projects"
-                          onClick={onNavigate}
-                          className="mb-2 flex w-full items-center gap-2 rounded-md bg-neutral-100/50 px-3 py-2 text-[12px] font-semibold text-neutral-600 transition-colors hover:bg-neutral-200/50 hover:text-neutral-900 dark:bg-neutral-800/30 dark:text-neutral-400 dark:hover:bg-neutral-800/60 dark:hover:text-neutral-200"
-                        >
-                          <SquaresFour className="h-3.5 w-3.5" weight="bold" />
-                          <span>{t.showAllProjects}</span>
-                        </Link>
-
-                        {projects.length === 0 && (
-                          <Link
-                            href="/sales-agents/projects/new"
-                            onClick={onNavigate}
-                            className="inline-flex items-center gap-1.5 rounded-md px-1 py-1.5 text-[13px] font-medium text-neutral-500 transition-colors hover:text-black dark:hover:text-white"
-                          >
-                            <Plus className="w-3.5 h-3.5" />
-                            <span>{t.newProject}</span>
-                          </Link>
-                        )}
-
-                        {projects.length > 0 && (
-                          <div className="pt-0.5 mt-0.5">
-                            {projects.slice(0, 5).map((project) => {
-                          const isActive = pathname?.includes(`/projects/${project.id}`);
-                          return (
-                            <div key={project.id}>
-                              <Link
-                                href={`/sales-agents/projects/${project.id}`}
-                                onClick={onNavigate}
-                                className="relative flex items-center px-3 py-1.5 rounded-lg text-[13px] font-medium transition-colors group"
-                              >
-                                <span
-                                  className={cn(
-                                    "truncate transition-colors flex-1",
-                                    isActive
-                                      ? "text-black dark:text-white"
-                                      : "text-neutral-500 group-hover:text-neutral-800 dark:group-hover:text-neutral-200"
-                                  )}
-                                >
-                                  {project.name}
-                                </span>
-                              </Link>
-                            </div>
-                          );
-                        })}
-                          </div>
-                        )}
-                      </>
-                    )}
+              <div className="space-y-1 pt-2">
+                <SectionHeading label={t.recentProjects} />
+                {loadingProjects ? (
+                  <RecentListSkeleton />
+                ) : visibleProjects.length === 0 ? (
+                  <p className="pl-10 pt-1 text-sm italic text-neutral-400 dark:text-neutral-500">
+                    {t.noProjects}
+                  </p>
+                ) : (
+                  <div className="space-y-0.5">
+                    {visibleProjects.map((project) => (
+                      <RecentLink
+                        key={project.id}
+                        href={`/sales-agents/projects/${project.id}`}
+                        label={project.name}
+                        active={selectedProjectId === project.id}
+                        section="salesAgents"
+                        onClick={onNavigate}
+                      />
+                    ))}
                   </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
-
-        {/* Scripts Branch */}
-        <div className="space-y-2">
-          <Link
-            href="/sales-agents/scripts"
-            onClick={onNavigate}
-            className="relative z-10 flex min-w-0 items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-colors group"
-          >
-            {isScriptsBranchActive && (
-              <motion.div
-                layoutId="sidebar-active"
-                className="absolute inset-0 bg-neutral-100 dark:bg-neutral-800/50 rounded-lg -z-10"
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              />
-            )}
-            <ScrollText className={cn(
-              "w-4 h-4 transition-colors",
-              isScriptsBranchActive ? "text-black dark:text-white" : "text-neutral-400 group-hover:text-black dark:group-hover:text-white"
-            )} />
-            <span className={cn(
-              "truncate transition-colors",
-              isScriptsBranchActive ? "text-black dark:text-white" : "text-neutral-500 group-hover:text-black dark:group-hover:text-white"
-            )}>
-              {t.scriptsTitle}
-            </span>
-            <div
-              className={cn(
-                "absolute left-0 top-[20%] bottom-[20%] w-[3px] rounded-r-md transition-colors",
-                isScriptsBranchActive
-                  ? "bg-[#8fe0b5]"
-                  : "bg-[#8fe0b5]/40"
-              )}
-            />
-          </Link>
-
-          <div className="space-y-1 ml-4 pl-3">
-            <button
-              type="button"
-              onClick={() => setScriptsOpen((prev) => !prev)}
-              className={cn(
-                "inline-flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-[13px] font-medium transition-colors",
-                isAllScriptsNodeActive
-                  ? "bg-neutral-100 dark:bg-neutral-800/40 text-black dark:text-white"
-                  : "text-neutral-500 hover:text-black dark:hover:text-white hover:bg-neutral-100/60 dark:hover:bg-neutral-800/30"
-              )}
-            >
-              <FileText className="h-3.5 w-3.5 shrink-0 opacity-80" />
-              <span className="flex-1 text-left">{t.allScripts}</span>
-              <motion.span
-                initial={false}
-                animate={{ rotate: menuStateReady && scriptsOpen ? 0 : -90 }}
-                transition={{ duration: allowMenuAnimation ? 0.2 : 0, ease: "easeOut" }}
-                className={cn(
-                  "inline-flex items-center justify-center transition-opacity",
-                  menuStateReady ? "opacity-70" : "opacity-0"
                 )}
-              >
-                <ChevronDown className="h-3.5 w-3.5" />
-              </motion.span>
-            </button>
+              </div>
+            </section>
 
-            <AnimatePresence initial={false}>
-              {scriptsOpen && (
-                <motion.div
-                  key="scripts-dropdown"
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: allowMenuAnimation ? 0.22 : 0, ease: "easeOut" }}
-                  className="overflow-hidden"
-                >
-                  <div className="ml-3 space-y-0.5 pt-0.5">
-                    {loading ? (
-                      <div className="py-2.5 text-sm text-neutral-400 flex items-center gap-3">
-                        <div className="w-1.5 h-1.5 rounded-full bg-neutral-300 dark:bg-neutral-700 animate-pulse" />
-                        {t.loading}
-                      </div>
-                    ) : (
-                      <>
-                        <Link
-                          href="/sales-agents/scripts/all"
-                          onClick={onNavigate}
-                          className="mb-2 flex w-full items-center gap-2 rounded-md bg-neutral-100/50 px-3 py-2 text-[12px] font-semibold text-neutral-600 transition-colors hover:bg-neutral-200/50 hover:text-neutral-900 dark:bg-neutral-800/30 dark:text-neutral-400 dark:hover:bg-neutral-800/60 dark:hover:text-neutral-200"
-                        >
-                          <ListDashes className="h-3.5 w-3.5" weight="bold" />
-                          <span>{t.showAllScripts}</span>
-                        </Link>
+            <Divider />
 
-                        {scripts.length === 0 && (
-                          <Link
-                            href="/sales-agents/scripts/new"
-                            onClick={onNavigate}
-                            className="flex w-full items-center gap-1.5 rounded-md px-3 py-1.5 text-[13px] font-medium text-neutral-500 transition-colors hover:text-black dark:hover:text-white"
-                          >
-                            <Plus className="w-3.5 h-3.5" />
-                            <span>{t.newScript}</span>
-                          </Link>
-                        )}
+            <section className="space-y-2">
+              <SectionHeading label={t.scripts} />
+              <div className="space-y-0.5">
+                <SidebarRow
+                  href="/sales-agents/scripts"
+                  icon={ScrollText}
+                  label={t.workspace}
+                  active={isScriptsWorkspaceActive}
+                  section="scripts"
+                  onClick={onNavigate}
+                />
+                <SidebarRow
+                  href="/sales-agents/scripts/all"
+                  icon={ListDashes}
+                  label={t.allScripts}
+                  active={isAllScriptsActive || selectedScriptId !== null}
+                  section="scripts"
+                  onClick={onNavigate}
+                />
+                <SidebarRow
+                  href="/sales-agents/scripts/new"
+                  icon={Plus}
+                  label={t.newScript}
+                  active={isNewScriptActive}
+                  section="scripts"
+                  onClick={onNavigate}
+                />
+              </div>
 
-                        {scripts.length > 0 && (
-                          <div className="pt-0.5 mt-0.5">
-                            {scripts.slice(0, 5).map((script) => {
-                              const isActive = pathname?.includes(`/scripts/${script.id}`);
-                              return (
-                                <div key={script.id}>
-                                  <Link
-                                    href={`/sales-agents/scripts/${script.id}/chat`}
-                                    onClick={onNavigate}
-                                    className="relative flex items-center px-3 py-1.5 rounded-lg text-[13px] font-medium transition-colors group"
-                                  >
-                                    <span
-                                      className={cn(
-                                        "truncate transition-colors flex-1",
-                                        isActive
-                                          ? "text-black dark:text-white"
-                                          : "text-neutral-500 group-hover:text-neutral-800 dark:group-hover:text-neutral-200"
-                                      )}
-                                    >
-                                      {script.title || t.untitledScript}
-                                    </span>
-                                  </Link>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </>
-                    )}
+              <div className="space-y-1 pt-2">
+                <SectionHeading label={t.recentScripts} />
+                {loadingScripts ? (
+                  <RecentListSkeleton />
+                ) : visibleScripts.length === 0 ? (
+                  <p className="pl-10 pt-1 text-sm italic text-neutral-400 dark:text-neutral-500">
+                    {t.noScripts}
+                  </p>
+                ) : (
+                  <div className="space-y-0.5">
+                    {visibleScripts.map((script) => (
+                      <RecentLink
+                        key={script.id}
+                        href={`/sales-agents/scripts/${script.id}/chat`}
+                        label={script.title || t.untitledScript}
+                        active={selectedScriptId === script.id}
+                        section="scripts"
+                        onClick={onNavigate}
+                      />
+                    ))}
                   </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
+                )}
+              </div>
+            </section>
 
+            <Divider />
+
+            <section className="space-y-2">
+              <SectionHeading label={t.chat} />
+              <div className="space-y-0.5">
+                <SidebarRow
+                  href="/sales-agents/chat"
+                  icon={ChatTeardropDots}
+                  label={t.newChat}
+                  active={isChatActive}
+                  section="chat"
+                  onClick={onNavigate}
+                />
+              </div>
+            </section>
+          </div>
+        </nav>
       </div>
     </aside>
   );

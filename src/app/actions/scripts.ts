@@ -88,45 +88,70 @@ async function resolveScriptAccess(
   scriptId: string,
   userId: string
 ): Promise<ScriptAccess | null> {
-  // Fetch the script with its project
-  const { data: script, error } = await supabase
+  // Fetch the script with its project (RLS allows: own scripts, project members, project owners, shared)
+  const { data: script } = await supabase
     .from("scripts")
     .select("*, projects (id, name)")
     .eq("id", scriptId)
     .single();
 
-  if (error || !script) return null;
+  if (script) {
+    // Owner check
+    if (script.owner_id === userId) {
+      return { script, role: "owner", canEdit: true, canManage: true, isOwner: true };
+    }
 
-  // Owner check
-  if (script.owner_id === userId) {
+    // Project member check
+    if (script.project_id) {
+      const { data: membership } = await supabase
+        .from("project_members")
+        .select("role")
+        .eq("project_id", script.project_id)
+        .eq("user_id", userId)
+        .eq("status", "approved")
+        .single();
+
+      if (membership) {
+        const role = membership.role as ScriptAccessRole;
+        const canEdit = ["owner", "admin", "sales_manager"].includes(role);
+        const canManage = ["owner", "admin"].includes(role);
+        return { script, role, canEdit, canManage, isOwner: false };
+      }
+
+      // Project owner check (owns the project but not the script)
+      const { data: ownedProject } = await supabase
+        .from("projects")
+        .select("id")
+        .eq("id", script.project_id)
+        .eq("owner_id", userId)
+        .single();
+
+      if (ownedProject) {
+        return { script, role: "owner", canEdit: true, canManage: true, isOwner: false };
+      }
+    }
+
+    // Shared via link
+    return { script, role: "viewer", canEdit: false, canManage: false, isOwner: false };
+  }
+
+  // Fallback: script not visible via normal RLS — try project owner SECURITY DEFINER
+  const { data: rows } = await supabase.rpc("get_script_as_project_owner", {
+    p_script_id: scriptId,
+  });
+
+  const ownerScript = rows?.[0];
+  if (ownerScript) {
     return {
-      script,
+      script: { ...ownerScript, projects: null } as Script,
       role: "owner",
       canEdit: true,
       canManage: true,
-      isOwner: true,
+      isOwner: false,
     };
   }
 
-  // Project member check
-  if (script.project_id) {
-    const { data: membership } = await supabase
-      .from("project_members")
-      .select("role")
-      .eq("project_id", script.project_id)
-      .eq("user_id", userId)
-      .eq("status", "approved")
-      .single();
-
-    if (membership) {
-      const role = membership.role as ScriptAccessRole;
-      const canEdit = ["owner", "admin", "sales_manager"].includes(role);
-      const canManage = ["owner", "admin"].includes(role);
-      return { script, role, canEdit, canManage, isOwner: false };
-    }
-  }
-
-  return null; // No access
+  return null;
 }
 
 /**
@@ -598,6 +623,22 @@ export async function disconnectScriptFromProjectAction(
 }
 
 /**
+ * Project owner disconnects a team member's script from their project.
+ * The script owner_id stays the same — only project_id is cleared.
+ */
+export async function disconnectTeamScriptAction(scriptId: string): Promise<void> {
+  const supabase = await getServerSupabase();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) throw new Error("not_authenticated");
+
+  // SECURITY DEFINER — validates project ownership and disconnects
+  const { error } = await supabase.rpc("disconnect_team_script", {
+    p_script_id: scriptId,
+  });
+  if (error) throw new Error(error.message);
+}
+
+/**
  * Returns all scripts owned by the current user, with dialog count.
  */
 export async function getMyScriptsAction(): Promise<
@@ -813,16 +854,51 @@ export async function getMyOwnedProjectsAction(): Promise<
 }
 
 /**
- * Returns projects the user can manage (owner or admin) — for connecting scripts.
+ * Returns scripts connected to projects owned by the current user
+ * but NOT owned by the current user (i.e. scripts from team members).
  */
-export async function getManagedProjectsAction(): Promise<
-  { id: string; name: string }[]
+export async function getProjectConnectedScriptsAction(): Promise<
+  (Script & { dialog_count: number; share_count: number; member_name: string | null; member_email: string | null; projects?: { id: string; name: string } | null })[]
 > {
   const supabase = await getServerSupabase();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) throw new Error("not_authenticated");
+
+  // SECURITY DEFINER — bypasses RLS on scripts + profiles
+  const { data, error } = await supabase.rpc("get_project_team_scripts");
+  if (error) throw new Error(error.message);
+
+  return (data ?? []).map((r: any) => ({
+    id:           r.id,
+    owner_id:     r.owner_id,
+    title:        r.title,
+    description:  r.description,
+    sales_type:   r.sales_type,
+    project_id:   r.project_id,
+    share_key:    r.share_key ?? null,
+    created_at:   r.created_at,
+    updated_at:   r.updated_at,
+    dialog_count: Number(r.dialog_count ?? 0),
+    share_count:  Number(r.share_count ?? 0),
+    member_name:  r.member_name ?? null,
+    member_email: r.member_email ?? null,
+    projects:     r.project_name ? { id: r.project_id, name: r.project_name } : null,
+  }));
+}
+
+/**
+ * Returns ALL projects the user has access to:
+ * - Projects they own
+ * - Projects they are an approved member of (any role)
+ *
+ * Each entry includes `isOwner` and `role` so the UI can decide
+ * whether connecting is direct (owner/admin) or via request (member).
+ */
+export async function getManagedProjectsAction(): Promise<
+  { id: string; name: string; isOwner: boolean; role: string | null }[]
+> {
+  const supabase = await getServerSupabase();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) throw new Error("not_authenticated");
 
   // Projects user owns
@@ -832,38 +908,172 @@ export async function getManagedProjectsAction(): Promise<
     .eq("owner_id", user.id)
     .order("created_at", { ascending: false });
 
-  // Projects where user is admin
-  const { data: adminMemberships } = await supabase
+  // All approved memberships (any role)
+  const { data: memberships } = await supabase
     .from("project_members")
-    .select("project_id")
+    .select("project_id, role")
     .eq("user_id", user.id)
-    .eq("status", "approved")
-    .eq("role", "admin");
+    .eq("status", "approved");
 
-  const adminProjectIds = (adminMemberships ?? []).map((m) => m.project_id);
-  let adminProjects: { id: string; name: string }[] = [];
+  const membershipMap: Record<string, string> = {};
+  for (const m of memberships ?? []) {
+    membershipMap[m.project_id] = m.role;
+  }
 
-  if (adminProjectIds.length > 0) {
+  const memberProjectIds = Object.keys(membershipMap);
+  let memberProjects: { id: string; name: string }[] = [];
+
+  if (memberProjectIds.length > 0) {
     const { data } = await supabase
       .from("projects")
       .select("id, name")
-      .in("id", adminProjectIds)
+      .in("id", memberProjectIds)
       .order("created_at", { ascending: false });
-    adminProjects = data ?? [];
+    memberProjects = data ?? [];
   }
 
-  // Merge and deduplicate
+  // Merge: owned first, then member projects not already in owned
   const owned = ownedProjects ?? [];
-  const seen = new Set(owned.map((p) => p.id));
-  const merged = [...owned];
-  for (const p of adminProjects) {
-    if (!seen.has(p.id)) {
-      merged.push(p);
-      seen.add(p.id);
+  const ownedIds = new Set(owned.map((p) => p.id));
+
+  const result: { id: string; name: string; isOwner: boolean; role: string | null }[] = [
+    ...owned.map((p) => ({ ...p, isOwner: true, role: "owner" })),
+  ];
+
+  for (const p of memberProjects) {
+    if (!ownedIds.has(p.id)) {
+      result.push({
+        ...p,
+        isOwner: false,
+        role: membershipMap[p.id] ?? "viewer",
+      });
     }
   }
 
-  return merged;
+  return result;
+}
+
+// ── Script connect requests ──────────────────────────────────────────────────
+
+export interface ScriptConnectRequest {
+  id: string;
+  script_id: string;
+  project_id: string;
+  requester_id: string;
+  status: "pending" | "approved" | "rejected";
+  created_at: string;
+  // Joined data
+  requester_email: string | null;
+  requester_name: string | null;
+  requester_avatar: string | null;
+  script_title: string | null;
+  script_description: string | null;
+  script_sales_type: string | null;
+  project_name: string | null;
+}
+
+/**
+ * Member requests to connect their own script to a project they belong to.
+ * If they are the project owner or admin → connects directly.
+ * Otherwise → creates a pending request for the project owner to approve.
+ */
+export async function requestScriptConnectAction(
+  scriptId: string,
+  projectId: string
+): Promise<{ direct: boolean }> {
+  const supabase = await getServerSupabase();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) throw new Error("not_authenticated");
+
+  // User must own the script
+  const { data: script } = await supabase
+    .from("scripts")
+    .select("id, owner_id")
+    .eq("id", scriptId)
+    .single();
+  if (!script) throw new Error("script_not_found");
+  if (script.owner_id !== user.id) throw new Error("not_script_owner");
+
+  // Use SECURITY DEFINER RPC — handles all permission checks and RLS bypass internally
+  const { data: result, error } = await supabase.rpc("create_script_connect_request", {
+    p_script_id:  scriptId,
+    p_project_id: projectId,
+  });
+
+  if (error) throw new Error(error.message);
+  return { direct: result === "direct" };
+}
+
+/**
+ * Returns pending script connect requests for projects owned by the current user.
+ */
+export async function getScriptConnectRequestsAction(): Promise<ScriptConnectRequest[]> {
+  const supabase = await getServerSupabase();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) throw new Error("not_authenticated");
+
+  // SECURITY DEFINER RPC — bypasses RLS on script_connect_requests and profiles
+  const { data, error } = await supabase.rpc("get_script_connect_requests");
+  if (error) throw new Error(error.message);
+
+  return (data ?? []).map((r: any) => ({
+    id: r.id,
+    script_id: r.script_id,
+    project_id: r.project_id,
+    requester_id: r.requester_id,
+    status: r.status,
+    created_at: r.created_at,
+    requester_email: r.requester_email ?? null,
+    requester_name: r.requester_name ?? null,
+    requester_avatar: r.requester_avatar ?? null,
+    script_title: r.script_title ?? null,
+    script_description: r.script_description ?? null,
+    script_sales_type: r.script_sales_type ?? null,
+    project_name: r.project_name ?? null,
+  }));
+}
+
+/**
+ * Owner approves a script connect request → connects the script to the project.
+ */
+export async function approveScriptConnectRequestAction(requestId: string): Promise<void> {
+  const supabase = await getServerSupabase();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) throw new Error("not_authenticated");
+
+  // Use SECURITY DEFINER RPC — bypasses RLS so owner can update a script they don't own
+  const { error } = await supabase.rpc("approve_script_connect_request", {
+    p_request_id: requestId,
+  });
+  if (error) throw new Error(error.message);
+}
+
+/**
+ * Owner rejects a script connect request.
+ */
+export async function rejectScriptConnectRequestAction(requestId: string): Promise<void> {
+  const supabase = await getServerSupabase();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) throw new Error("not_authenticated");
+
+  const { data: req } = await supabase
+    .from("script_connect_requests")
+    .select("id, project_id")
+    .eq("id", requestId)
+    .single();
+  if (!req) throw new Error("request_not_found");
+
+  const { data: project } = await supabase
+    .from("projects")
+    .select("owner_id")
+    .eq("id", req.project_id)
+    .single();
+  if (!project || project.owner_id !== user.id) throw new Error("not_project_owner");
+
+  await supabase
+    .from("script_connect_requests")
+    .update({ status: "rejected" })
+    .eq("id", requestId);
 }
 
 /**
@@ -919,14 +1129,23 @@ export async function getScriptDialogsAction(
   const access = await resolveScriptAccess(supabase, scriptId, user.id);
   if (!access) throw new Error("script_not_found");
 
+  // Try normal read first; fall back to SECURITY DEFINER if project owner
   const { data, error } = await supabase
     .from("script_dialogs")
     .select("*")
     .eq("script_id", scriptId)
     .order("created_at", { ascending: true });
 
-  if (error) throw new Error(error.message);
-  return (data ?? []) as ScriptDialog[];
+  if (!error && data !== null) return (data ?? []) as ScriptDialog[];
+
+  // Fallback for project owner who can't read dialogs via normal RLS
+  const { data: rpcData, error: rpcError } = await supabase.rpc(
+    "get_script_dialogs_as_project_owner",
+    { p_script_id: scriptId }
+  );
+
+  if (rpcError) throw new Error(rpcError.message);
+  return (rpcData ?? []) as ScriptDialog[];
 }
 
 /**
