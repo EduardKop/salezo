@@ -28,7 +28,6 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { PageLoader } from "@/components/ui/page-loader";
 import {
   saveDialogAction,
-  getScriptAction,
   getScriptDialogsAction,
   deleteDialogAction,
   updateScriptMetadataAction,
@@ -486,14 +485,25 @@ export default function ScriptChatPage() {
 
     setIsSaving(true);
     try {
-      await saveDialogAction(scriptId, filledTurns);
-      const updated = await getScriptDialogsAction(scriptId);
-      setDialogs(updated);
+      const savedDialog = await saveDialogAction(scriptId, filledTurns);
+      setDialogs((prev) =>
+        [...prev, savedDialog].sort(
+          (a, b) =>
+            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        )
+      );
       setTurns([
         { role: "client", type: "text", text: "", visual_description: "" },
         { role: "manager", type: "text", text: "", visual_description: "" },
       ]);
       toast.success(t.dialogSaved);
+      void getScriptDialogsAction(scriptId)
+        .then((updated) => {
+          setDialogs(updated);
+        })
+        .catch(() => {
+          // The save already succeeded; a delayed sync should not block the UI.
+        });
     } catch { toast.error(t.errorSaving); }
     finally { setIsSaving(false); }
   };

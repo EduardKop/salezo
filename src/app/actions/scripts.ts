@@ -538,7 +538,7 @@ export async function updateScriptMetadataAction(
 export async function saveDialogAction(
   scriptId: string,
   turns: DialogTurn[]
-): Promise<void> {
+): Promise<ScriptDialog> {
   const supabase = await getServerSupabase();
   const {
     data: { user },
@@ -552,18 +552,30 @@ export async function saveDialogAction(
 
   // Try SECURITY DEFINER RPC first
   try {
-    const { error: rpcError } = await supabase.rpc("save_script_dialog", {
+    const { data: rpcId, error: rpcError } = await supabase.rpc("save_script_dialog", {
       p_script_id: scriptId,
       p_turns:     turns,
     });
-    if (!rpcError) return;
+    if (!rpcError) {
+      return {
+        id: typeof rpcId === "string" ? rpcId : crypto.randomUUID(),
+        script_id: scriptId,
+        turns,
+        created_at: new Date().toISOString(),
+      };
+    }
   } catch { /* RPC not available — fall through */ }
 
   // Fallback: direct INSERT
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("script_dialogs")
-    .insert({ script_id: scriptId, turns });
+    .insert({ script_id: scriptId, turns })
+    .select("id, script_id, turns, created_at")
+    .single();
   if (error) throw new Error(error.message);
+  if (!data) throw new Error("dialog_not_saved");
+
+  return data as ScriptDialog;
 }
 
 /**

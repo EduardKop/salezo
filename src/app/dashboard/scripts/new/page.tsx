@@ -24,6 +24,7 @@ const translations = {
     inPerson: "In-Person",
     inPersonDesc: "Walk-ins, showroom, field sales, meetings",
     creating: "Creating script...",
+    redirecting: "Opening script...",
     continue: "Create Script",
     errorCreating: "Failed to create script. Please try again.",
     scriptTitle: "Script Name",
@@ -46,6 +47,7 @@ const translations = {
     inPerson: "Живые продажи",
     inPersonDesc: "Шоу-рум, выезд, встречи, офлайн",
     creating: "Создание скрипта...",
+    redirecting: "Открываем скрипт...",
     continue: "Создать скрипт",
     errorCreating: "Не удалось создать скрипт. Попробуйте ещё раз.",
     scriptTitle: "Название скрипта",
@@ -133,11 +135,12 @@ export default function NewScriptPage() {
   const [title, setTitle] = React.useState("");
   const [description, setDescription] = React.useState("");
   const [isCreating, setIsCreating] = React.useState(false);
+  const [isRedirecting, setIsRedirecting] = React.useState(false);
 
   if (!mounted) return <PageLoader className="min-h-[calc(100vh-5rem)]" />;
 
   const handleContinue = async () => {
-    if (!selected || isCreating) return;
+    if (!selected || isCreating || isRedirecting) return;
     if (!title.trim() || !description.trim()) {
       toast.error(language === "ru" ? "Заполните все поля" : "Please fill in all fields");
       return;
@@ -150,7 +153,11 @@ export default function NewScriptPage() {
         title.trim(),
         description.trim()
       );
-      router.push(`/sales-agents/scripts/${scriptId}/chat`);
+      // Switch to "redirecting" state so user sees progress
+      setIsCreating(false);
+      setIsRedirecting(true);
+      // Full page navigation — bypasses Next.js RSC cache for freshly created page
+      window.location.href = `/sales-agents/scripts/${scriptId}/chat`;
     } catch {
       toast.error(t.errorCreating);
       setIsCreating(false);
